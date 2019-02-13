@@ -13,7 +13,7 @@ from state import State
 # import graphicsDisplay
 
 data = {'result': 'this is a test'}
-host = ('localhost', 1080)
+host = ('pacman', 1080)
 pixels = []
 width = 0
 height = 0
