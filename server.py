@@ -10,7 +10,7 @@ import random
 import os
 from game import Game
 from state import State
-import graphicsDisplay
+# import graphicsDisplay
 
 data = {'result': 'this is a test'}
 host = ('localhost', 1080)
@@ -74,7 +74,7 @@ class Resquest(BaseHTTPRequestHandler):
             args['numTraining'] = 2950
             args['pacmanType'] = loadAgent('SmartDQNAgent', False)
             args['ghostType'] = loadAgent('RandomGhost', False)
-            args['display'] = graphicsDisplay.PacmanGraphics(1.0, 0.1)
+            # args['display'] = graphicsDisplay.PacmanGraphics(1.0, 0.1)
             args['numGames'] = 3000
             args['record'] = False
             args['catchExceptions'] = False

@@ -179,9 +179,9 @@ def readCommand(argv):
         textDisplay.SLEEP_TIME = options.frameTime
         args['display'] = textDisplay.PacmanGraphics()
     else:
-        import graphicsDisplay
-        args['display'] = graphicsDisplay.PacmanGraphics(
-            options.zoom, frameTime=options.frameTime)
+        # import graphicsDisplay
+        # args['display'] = graphicsDisplay.PacmanGraphics(
+        #     options.zoom, frameTime=options.frameTime)
     args['numGames'] = options.numGames
     args['record'] = options.record
     args['catchExceptions'] = options.catchExceptions
