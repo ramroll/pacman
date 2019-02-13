@@ -98,6 +98,9 @@ class SmartDQNAgent:
                            self.qnet.rewards: np.zeros(1)})[0]
 
             self.Q_global.append(max(self.Q_pred))
+            legalActions=[ 
+                x for x in Actions.getPossibleActions(self.player.pos, state.layout.walls)
+            ]
             a_winner = np.argwhere(self.Q_pred == np.amax(self.Q_pred))
 
             if len(a_winner) > 1:
@@ -106,6 +109,8 @@ class SmartDQNAgent:
             else:
                 move = self.get_direction(
                     a_winner[0][0])
+            if not move in legalActions:
+                move = random.choice(legalActions)
         else:
             # Random:
             move = self.get_direction(np.random.randint(0, 4))
@@ -335,7 +340,7 @@ class SmartDQNAgent:
             """ Return matrix with capsule coordinates set to 1 """
             # width, height = state.layout.width, state.layout.height
             width, height = SIGHT, SIGHT
-            capsules = state.layout.capsules
+            capsules = state.capsules
             matrix = np.zeros((height, width), dtype=np.int8)
             for i in capsules:
                 x,y=i

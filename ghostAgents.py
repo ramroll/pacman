@@ -101,6 +101,10 @@ class AstarGhost(GhostAgent) :
                     for j in range(-1, 2):
                         if (abs(i) != abs(j)) :
                             x, y = fx + i, fy + j
+
+                            if not (x >= 0 and y >= 0 and x < width and y < height):
+                                continue
+
                             if walls[x][y] :
                                 continue
                             
@@ -139,7 +143,7 @@ class AstarGhost(GhostAgent) :
                 minLen = len(p)
                 minLenPath = p 
 
-        if len(p) == 1 :
+        if len(p) == 1 or len(p) == 0:
             return Directions.STOP
 
         tx, ty = p[1]
