@@ -115,7 +115,6 @@ class Game:
         while(result == 0):
 
             alivePlayers = state.alivePlayers()
-            self.notifyAgentHooks('observationFunction')
             for player in alivePlayers:
 
                 if not player.alive:
@@ -134,6 +133,7 @@ class Game:
             if self.params['numTraining'] < rnd:
                 self.display.update(state, rnd)
 
+            self.notifyAgentHooks('observationFunction')
             eps += 1
 
         self.notifyAgentHooks('final')

@@ -10,6 +10,7 @@ class State :
     self.pacmanScore = 0
     self.ghostScore = layout.food.count() * 10
 
+    self.t_h = {}
     ## For graphics
     self._foodEaten = None
     self._capsuleEaten = None
@@ -28,6 +29,8 @@ class State :
     state = State(self.layout)
     state.pacmanScore = self.pacmanScore
     state.ghostScore = self.ghostScore
+    state.food = self.food.copy()
+    state.capsules = self.capsules.copy()
 
     state.players = []
     for player in self.players :
@@ -126,8 +129,10 @@ class State :
     return [x.pos for x in alivePacmans]
 
 
-  # def __hash__(self) :
-  #   return int(hash(tuple(self.players)) + 13*hash(self.food) + 113* hash(tuple(self.capsules)))
+  def __hash__(self) :
+    h = hash(tuple(self.players))
+    k = hash(self.food) 
+    return hash(h + 17*k + 113 * hash(tuple(self.capsules)))
 
 
   def __str__(self):

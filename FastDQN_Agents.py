@@ -30,6 +30,7 @@ params = {
     'eps_step': 10000       # Epsilon steps between start and end (linear)
 }
 
+
 class FastDQNAgent:
 
   def __init__(self, player, args) :
@@ -48,10 +49,11 @@ class FastDQNAgent:
     self.numeps = 0
     self.ep_rew = 0
     self.eps = params['eps']
-    self.won = True
     self.last_state = None
     self.last_pos = self.player.pos
     self.QValues = util.Counter()
+    self.food_hash = {}
+    # self.player_hash = {}
     # self.load()
   
   def getLegalActions(self, state) :
@@ -85,13 +87,20 @@ class FastDQNAgent:
     return action
 
   def getQValue(self, state, action) :
-    return self.QValues[(state, action)]
+    h = hash((state, action))
+    return self.QValues[h]
 
   def getAction(self, state) :
-    legalActions = self.getLegalActions(state)
+    neighbors = Actions.getLegalNeighbors(self.player.pos, state.layout.walls)
+    foods = [p for p in neighbors if state.food[p[0]][p[1]]]
+
+    legalActions = [a for a in self.getLegalActions(state) if a != 'Stop']
+
     action = random.choice(legalActions) 
-    if len(legalActions) == 0:
-      return action
+    if len(foods) > 0 :
+      p = random.choice(foods)
+      action = Actions.vectorToDirection((p[0] - self.player.pos[0], p[1] - self.player.pos[1]))
+
 
     if np.random.rand() > self.eps :
       action = self.computeActionFromQValues(state) 
@@ -102,17 +111,18 @@ class FastDQNAgent:
   def observationFunction(self, newState) :
 
 
+    if(self.frame == 2) :
+      self.food_hash[hash(newState)] = 1
       
     pos = self.player.pos
     state = self.last_state
     action = Actions.vectorToDirection((pos[0] - self.last_pos[0], pos[1] - self.last_pos[1])) 
 
-    self.last_state = newState
     self.last_pos = pos
     if self.last_action is not None :
       curQValue = self.getQValue(state, action)
 
-      self.current_score = state.pacmanScore
+      self.current_score = newState.pacmanScore
       reward = self.current_score - self.last_score
       self.last_score = self.current_score
       self.last_reward = reward
@@ -123,14 +133,17 @@ class FastDQNAgent:
                                           + self.params['discount'] * self.computeValueFromQValues(newState) )
       self.local_cnt += 1
       self.eps = max(self.params['eps_final'], 1.00 - float(self.cnt) / float(self.params['eps_step']))
-      self.won = state.pacmanScore > state.ghostScore
+      self.won = newState.pacmanScore > newState.ghostScore
     self.last_action = action
+    self.last_state = newState.copy()
+    self.frame += 1
 
   def init(self,state):
     self.frame = 0
     self.numeps += 1
     self.last_state = state
     self.last_pos = self.player.pos
+    self.won = True
 
 
   def final(self, state) :
@@ -146,7 +159,7 @@ class FastDQNAgent:
     sys.stdout.write("# %4d | steps: %5d | t: %4f | r: %12f | e: %10f | won: %s\n" %
                       (self.numeps, self.local_cnt, time.time()-self.s, self.ep_rew, self.eps, self.won))
     # sys.stdout.write("| Q: %10f | won: %r \n" %
-    print(' %4d' % (len(self.QValues)))
+    print(' %4d %4d' % (len(self.QValues), len(self.food_hash)))
     sys.stdout.flush()
 
     if self.cnt > 0 and  self.cnt % 5000 == 0:  

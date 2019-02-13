@@ -135,9 +135,12 @@ class ApproximateAgent:
     dx, dy = Actions.directionToVector(action)
     next_x, next_y = int(x + dx), int(y + dy)
     ghosts = state.aliveGhosts()
-    features['1-step-away-ghosts'] = sum((next_x, next_y) in Actions.getLegalNeighbors(g.pos, walls) for g in ghosts)
-    if not features["1-step-away-ghosts"] and food[next_x][next_y]:
-      features["eats-food"] = 1.0
+    features['1-step-away-capsules'] = sum((next_x, next_y) in Actions.getLegalNeighbors(c, walls) for c in state.capsules)
+
+    if not features['1-step-away-capsules'] :
+      features['1-step-away-ghosts'] = sum((next_x, next_y) in Actions.getLegalNeighbors(g.pos, walls) for g in ghosts)
+      if not features["1-step-away-ghosts"] and food[next_x][next_y]:
+        features["eats-food"] = 1.0
     
     dist = closestFood(self.player.pos, food, walls)
     if dist is not None:

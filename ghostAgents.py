@@ -129,26 +129,29 @@ class AstarGhost(GhostAgent) :
             path.reverse()
             return path
         
-        paths = [astar(self.player.pos, p.pos, state.layout.walls, state.layout.width, state.layout.height) for p in  pacmans]
+        # paths = [astar(self.player.pos, p.pos, state.layout.walls, state.layout.width, state.layout.height) for p in  pacmans]
 
-        # print(paths)
-        # import sys
-        # sys.exit(0)
-
-        minLenPath = None
-        minLen = 999
-
-        for p in paths:
-            if minLen > len(p) :
-                minLen = len(p)
-                minLenPath = p 
-
-        if len(p) == 1 or len(p) == 0:
+        nearestPacman = None
+        nearestPath = None
+        minPath = 1e10 
+        for pacman in pacmans : 
+            path = astar(self.player.pos, pacman.pos, state.layout.walls, state.layout.width, state.layout.height)
+            if minPath > len(path) :
+                nearestPacman = pacman
+                nearestPath = path
+                minPath = len(path)
+        
+        if not nearestPath or len(nearestPath) < 2:
             return Directions.STOP
 
-        tx, ty = p[1]
+        tx, ty = nearestPath[1]
         sx, sy = self.player.pos 
         action = Actions.vectorToDirection((tx - sx, ty - sy) )
+        if nearestPacman.super:
+            action = Actions.reverseDirection(action)
+        legalActions = Actions.getPossibleActions(self.player.pos, state.layout.walls)
+        if not action in legalActions :
+            action = random.choice(legalActions)
         return action
                
 

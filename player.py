@@ -10,6 +10,7 @@ class Player:
         self.moves = 0
         self.index = index
         self.dir = None
+        self.kind = {}
 
     def copy(self):
         player = Player(self.isPacman, self.pos, self.index, self.super)
@@ -29,6 +30,7 @@ class Player:
         self.moves = 0
 
     def __hash__(self) :
-        return hash(hash(self.pos) + 13 * hash((self.isPacman, self.super)))
+        h = hash(hash(self.pos) + 13 * hash((self.isPacman, self.super)))
+        return h
 
 
