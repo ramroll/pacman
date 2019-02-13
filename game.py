@@ -1,7 +1,7 @@
 from os import system, name
 from player import Player
 from state import State
-from graphicsUtils import *
+# from graphicsUtils import *
 
 
 class Game:
@@ -11,7 +11,7 @@ class Game:
         self.pacmanType = params['pacmanType']
         self.ghostType = params['ghostType']
         self.initialize(params['layout'])
-        self.display = params['display']
+        # self.display = params['display']
 
         # 没回合吃掉豆子的比例
         self.rate = 0
