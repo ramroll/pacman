@@ -1,0 +1,119 @@
+pacman:  DQNAgent
+pacman:  RndAgent
+Initialise DQN Agent
+#    1 | steps:   299 | steps_t:     0 | t: 0.048377 | r:  -187.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-288), ghost(500)
+#    2 | steps:   376 | steps_t:     0 | t: 0.059363 | r:    24.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-76), ghost(500)
+#    3 | steps:   523 | steps_t:     0 | t: 0.079206 | r:   -46.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-146), ghost(500)
+#    4 | steps:   578 | steps_t:     0 | t: 0.086817 | r:    46.000000 | e:   1.000000 | Q:        nan | won: True 
+pacman win, pacman(456), ghost(0)
+#    5 | steps:   665 | steps_t:     0 | t: 0.098596 | r:    14.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-86), ghost(500)
+#    6 | steps:   690 | steps_t:     0 | t: 0.102051 | r:    76.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-24), ghost(500)
+#    7 | steps:   721 | steps_t:     0 | t: 0.106430 | r:    70.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-30), ghost(500)
+#    8 | steps:   877 | steps_t:     0 | t: 0.127291 | r:   -55.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-155), ghost(500)
+#    9 | steps:  1216 | steps_t:     0 | t: 0.173214 | r:  -238.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-338), ghost(500)
+#   10 | steps:  1260 | steps_t:     0 | t: 0.179808 | r:    57.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-43), ghost(500)
+#   11 | steps:  1369 | steps_t:     0 | t: 0.194731 | r:    -8.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-108), ghost(500)
+#   12 | steps:  1590 | steps_t:     0 | t: 0.224995 | r:  -120.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-220), ghost(500)
+#   13 | steps:  1645 | steps_t:     0 | t: 0.232561 | r:    46.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-54), ghost(500)
+#   14 | steps:  1712 | steps_t:     0 | t: 0.241694 | r:    34.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-66), ghost(500)
+#   15 | steps:  1833 | steps_t:     0 | t: 0.258014 | r:   -20.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-120), ghost(500)
+#   16 | steps:  1932 | steps_t:     0 | t: 0.271709 | r:     2.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-98), ghost(500)
+#   17 | steps:  1964 | steps_t:     0 | t: 0.276178 | r:    69.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-31), ghost(500)
+#   18 | steps:  2115 | steps_t:     0 | t: 0.296601 | r:   -50.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-150), ghost(500)
+#   19 | steps:  2370 | steps_t:     0 | t: 0.331090 | r:  -154.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-254), ghost(500)
+#   20 | steps:  2554 | steps_t:     0 | t: 0.376432 | r:   -83.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-183), ghost(500)
+#   21 | steps:  2579 | steps_t:     0 | t: 0.380199 | r:    76.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-24), ghost(500)
+#   22 | steps:  2616 | steps_t:     0 | t: 0.385655 | r:    64.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-36), ghost(500)
+#   23 | steps:  2676 | steps_t:     0 | t: 0.394952 | r:    41.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-59), ghost(500)
+#   24 | steps:  2824 | steps_t:     0 | t: 0.416165 | r:   -47.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-147), ghost(500)
+#   25 | steps:  2868 | steps_t:     0 | t: 0.422381 | r:    57.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-43), ghost(500)
+#   26 | steps:  3160 | steps_t:     0 | t: 0.462048 | r:  -191.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-291), ghost(500)
+#   27 | steps:  3363 | steps_t:     0 | t: 0.489743 | r:  -102.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-202), ghost(500)
+#   28 | steps:  3428 | steps_t:     0 | t: 0.498685 | r:    36.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-64), ghost(500)
+#   29 | steps:  3552 | steps_t:     0 | t: 0.515452 | r:   -23.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-123), ghost(500)
+#   30 | steps:  3683 | steps_t:     0 | t: 0.533664 | r:   -30.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-130), ghost(500)
+#   31 | steps:  3752 | steps_t:     0 | t: 0.543009 | r:    32.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-68), ghost(500)
+#   32 | steps:  3872 | steps_t:     0 | t: 0.559295 | r:   -19.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-119), ghost(500)
+#   33 | steps:  3917 | steps_t:     0 | t: 0.565668 | r:    56.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-44), ghost(500)
+#   34 | steps:  4126 | steps_t:     0 | t: 0.593810 | r:  -108.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-208), ghost(500)
+#   35 | steps:  4285 | steps_t:     0 | t: 0.615499 | r:   -58.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-158), ghost(500)
+#   36 | steps:  4372 | steps_t:     0 | t: 0.627527 | r:    14.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-86), ghost(500)
+#   37 | steps:  4468 | steps_t:     0 | t: 0.641020 | r:     5.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-95), ghost(500)
+#   38 | steps:  4591 | steps_t:     0 | t: 0.657760 | r:   -22.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-122), ghost(500)
+#   39 | steps:  4641 | steps_t:     0 | t: 0.664741 | r:    51.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-49), ghost(500)
+#   40 | steps:  4790 | steps_t:     0 | t: 0.685844 | r:   -48.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-148), ghost(500)
+#   41 | steps:  4876 | steps_t:     0 | t: 0.697556 | r:    15.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-85), ghost(500)
+#   42 | steps:  4979 | steps_t:     0 | t: 0.711931 | r:    -2.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-102), ghost(500)
+#   43 | steps:  5000 | steps_t:     0 | t: 0.714915 | r:    80.000000 | e:   1.000000 | Q:        nan | won: True 
+ghost win, pacman(-20), ghost(500)
+#   44 | steps:  5040 | steps_t:    39 | t: 0.970120 | r:    61.000000 | e:   0.996100 | Q:        nan | won: True 
+ghost win, pacman(-39), ghost(500)
+#   45 | steps:  5151 | steps_t:   149 | t: 1.417211 | r:   -10.000000 | e:   0.985100 | Q:   0.202116 | won: True 
+ghost win, pacman(-110), ghost(500)
+#   46 | steps:  5266 | steps_t:   263 | t: 1.880529 | r:   -14.000000 | e:   0.973700 | Q:   0.683007 | won: True 
+ghost win, pacman(-114), ghost(500)
+#   47 | steps:  5394 | steps_t:   390 | t: 2.394143 | r:   -27.000000 | e:   0.961000 | Q:   8.589753 | won: True 
+ghost win, pacman(-127), ghost(500)
+#   48 | steps:  5461 | steps_t:   456 | t: 2.661669 | r:    34.000000 | e:   0.954400 | Q:  22.833471 | won: True 
+ghost win, pacman(-66), ghost(500)
+#   49 | steps:  5501 | steps_t:   495 | t: 2.833309 | r:    61.000000 | e:   0.950500 | Q:  19.460957 | won: True 
+ghost win, pacman(-39), ghost(500)
+#   50 | steps:  5637 | steps_t:   630 | t: 3.389222 | r:   -35.000000 | e:   0.937000 | Q:  21.304993 | won: True 
+ghost win, pacman(-135), ghost(500)
+#   51 | steps:  5743 | steps_t:   735 | t: 3.814659 | r:    -5.000000 | e:   0.926500 | Q:  22.749134 | won: True 
+ghost win, pacman(-105), ghost(500)
+#   52 | steps:  5859 | steps_t:   850 | t: 4.278353 | r:   -15.000000 | e:   0.915000 | Q:  32.329369 | won: True 
+ghost win, pacman(-115), ghost(500)
+#   53 | steps:  5934 | steps_t:   924 | t: 4.586004 | r:    26.000000 | e:   0.907600 | Q:  42.787846 | won: True 
+ghost win, pacman(-74), ghost(500)
+#   54 | steps:  6245 | steps_t:  1234 | t: 5.856835 | r:  -210.000000 | e:   0.876600 | Q:  34.037506 | won: True 
+ghost win, pacman(-310), ghost(500)
+#   55 | steps:  6386 | steps_t:  1374 | t: 6.448389 | r:   -40.000000 | e:   0.862600 | Q:  27.368031 | won: True 
+ghost win, pacman(-140), ghost(500)
+#   56 | steps:  6481 | steps_t:  1468 | t: 6.845033 | r:     6.000000 | e:   0.853200 | Q:  19.202824 | won: True 
+ghost win, pacman(-94), ghost(500)
+#   57 | steps:  6528 | steps_t:  1514 | t: 7.037673 | r:    54.000000 | e:   0.848600 | Q:  34.316700 | won: True 
+ghost win, pacman(-46), ghost(500)
+#   58 | steps:  6664 | steps_t:  1649 | t: 7.739118 | r:   -35.000000 | e:   0.835100 | Q:  43.953835 | won: True 
+ghost win, pacman(-135), ghost(500)
