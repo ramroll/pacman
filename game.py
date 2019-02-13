@@ -1,7 +1,7 @@
 from os import system, name
 from player import Player
 from state import State
-from graphicsUtils import *
+# from graphicsUtils import *
 
 
 class Game:
