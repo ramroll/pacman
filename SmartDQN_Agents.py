@@ -29,7 +29,7 @@ params = {
     # Model backups
     'load_file': 'saves/smart',
     'save_file': 'smart',
-    'save_interval': 20000,
+    'save_interval': 2000,
 
     # Training parameters
     'train_start': 5000,    # Episodes before training starts
@@ -48,22 +48,30 @@ params = {
 }
 
 
-SIGHT=7
+
 class SmartDQNAgent:
     def __init__(self, player, args):
         self.player = player
         print("Initialise DQN Agent")
 
         self.params =  params 
-        self.params['width'] = SIGHT
-        self.params['height'] = SIGHT
         self.params['num_training'] = args['num_training']
 
         self.params.update(args)
+        self.params['width'] = self.params['layout'].width
+        self.params['height'] = self.params['layout'].height
+        self.save_file = self.params['save_file'] + '-' + str(player.index)
+        self.load_file = self.params['load_file'] + '-' + str(player.index)
+        # self.save_file = self.params['save_file']
+        # self.load_file = self.params['load_file']
+
         # Start Tensorflow session
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.1)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-        self.qnet = DQN(self.params)
+
+        dqnParams = self.params.copy()
+        dqnParams['load_file'] = self.load_file
+        self.qnet = DQN(dqnParams)
 
         # time started
         self.general_record_time = time.strftime(
@@ -90,14 +98,17 @@ class SmartDQNAgent:
             # Exploit action
             self.Q_pred = self.qnet.sess.run(
                 self.qnet.y,
-                feed_dict={self.qnet.x: np.reshape(self.current_state,
-                                                   (1, SIGHT, SIGHT, 6)),
+                 feed_dict = {self.qnet.x: np.reshape(self.current_state,
+                                                     (1, self.params['width'], self.params['height'], 6)), 
                            self.qnet.q_t: np.zeros(1),
                            self.qnet.actions: np.zeros((1, 4)),
                            self.qnet.terminals: np.zeros(1),
                            self.qnet.rewards: np.zeros(1)})[0]
 
             self.Q_global.append(max(self.Q_pred))
+            legalActions=[ 
+                x for x in Actions.getPossibleActions(self.player.pos, state.layout.walls)
+            ]
             a_winner = np.argwhere(self.Q_pred == np.amax(self.Q_pred))
 
             if len(a_winner) > 1:
@@ -106,6 +117,8 @@ class SmartDQNAgent:
             else:
                 move = self.get_direction(
                     a_winner[0][0])
+            if not move in legalActions:
+                move = random.choice(legalActions)
         else:
             # Random:
             move = self.get_direction(np.random.randint(0, 4))
@@ -169,13 +182,13 @@ class SmartDQNAgent:
                 self.replay_mem.popleft()
 
             # Save model
-            if(params['save_file']):
-                if self.local_cnt > self.params['train_start'] and self.local_cnt % self.params['save_interval'] == 0:
+            if(self.save_file):
+                if self.local_cnt > self.params['train_start'] and self.numeps % self.params['save_interval'] == 0:
                     # self.qnet.save_ckpt(
                         # 'saves/model-' + params['save_file'] + "_" + str(self.cnt) + '_' + str(self.numeps))
 
                     self.qnet.save_ckpt(
-                        'saves/' + params['save_file'])
+                        'saves/' + self.save_file)
                     print('Model saved')
                     # import sys
                     # sys.exit()
@@ -259,95 +272,91 @@ class SmartDQNAgent:
 
 
     def getStateMatrices(self, state):
-
-        to_viewport = change_axis(self.player.pos)
-        to_map = change_axis((-self.player.pos[0], -self.player.pos[1]))
-        """ Return wall, ghosts, food, capsules matrices """
+        """ Return wall, ghosts, food, capsules matrices """ 
         def getWallMatrix(state):
             """ Return matrix with wall coordinates set to 1 """
-            width, height = SIGHT, SIGHT 
+            width, height = state.layout.width, state.layout.height
             grid = state.layout.walls
             matrix = np.zeros((height, width), dtype=np.int8)
-            for y in range(height):
-                for x in range(width) :
-                    # (j, i) 对应在屏幕上的坐标
-                    sx, sy = to_map((x, y))
-                    if not bounded((sx, sy), state.layout.width, state.layout.height): 
-                        cell = 1
-                    elif grid[-1-sx][sy]:
-                        cell = 1
-                    else : 
-                        cell = 0
-                    matrix[x][y] = cell
+            for i in range(grid.height):
+                for j in range(grid.width):
+                    # Put cell vertically reversed in matrix
+                    cell = 1 if grid[j][i] else 0
+                    matrix[-1-i][j] = cell
             return matrix
-
-
 
         def getPacmanMatrix(state):
             """ Return matrix with pacman coordinates set to 1 """
-            width,height=SIGHT,SIGHT
+            width, height = state.layout.width, state.layout.height
             matrix = np.zeros((height, width), dtype=np.int8)
-            matrix[SIGHT // 2][SIGHT // 2] = 1 
-            # matrix[-1-int(pos[1])][int(pos[0])] = cell
+
+            for player in state.players:
+                if player.isPacman and player != self.player:
+                    pos = player.pos 
+                    cell = 1
+                    matrix[-1-int(pos[1])][int(pos[0])] = cell
+
             return matrix
 
         def getGhostMatrix(state):
             """ Return matrix with ghost coordinates set to 1 """
-            matrix = np.zeros((SIGHT, SIGHT), dtype=np.int8)
+            width, height = state.layout.width, state.layout.height
+            matrix = np.zeros((height, width), dtype=np.int8)
+
             for player in state.players:
                 if not player.isPacman:
-                    if self.player.super == 0:
-                        vx, vy = distance_vector(self.player.pos, player.pos)
-                        matrix[vx][vy] += 1
-
+                    if not player.super > 0:
+                        pos = player.pos 
+                        cell = 1
+                        matrix[-1-int(pos[1])][int(pos[0])] = cell
 
             return matrix
 
         def getScaredGhostMatrix(state):
             """ Return matrix with ghost coordinates set to 1 """
-            matrix = np.zeros((SIGHT, SIGHT), dtype=np.int8)
+            width, height = state.layout.width, state.layout.height
+            matrix = np.zeros((height, width), dtype=np.int8)
+
             for player in state.players:
                 if not player.isPacman:
-                    if self.player.super > 0:
-                        vx, vy = distance_vector(self.player.pos, player.pos)
-                        # 需要写入的坐标位置
-                        matrix[vx][vy] += 1
-
+                    if player.super > 0:
+                        pos = player.pos 
+                        cell = 1
+                        matrix[-1-int(pos[1])][int(pos[0])] = cell
 
             return matrix
 
         def getFoodMatrix(state):
             """ Return matrix with food coordinates set to 1 """
+            width, height = state.layout.width, state.layout.height
             grid = state.food
-            matrix = np.zeros((SIGHT, SIGHT), dtype=np.int8)
-            for y in range(state.layout.height):
-                for x in range(state.layout.width):
-                    if grid[-1-x][y] :
-                        vx, vy = distance_vector(self.player.pos, (x, y))
-                        matrix[vx][vy] += 1
+            matrix = np.zeros((height, width), dtype=np.int8)
 
-            # print(matrix)
-            # import sys
-            # sys.exit()
+            for i in range(grid.height):
+                for j in range(grid.width):
+                    # Put cell vertically reversed in matrix
+                    cell = 1 if grid[j][i] else 0
+                    matrix[-1-i][j] = cell
+
             return matrix
 
         def getCapsulesMatrix(state):
             """ Return matrix with capsule coordinates set to 1 """
-            # width, height = state.layout.width, state.layout.height
-            width, height = SIGHT, SIGHT
-            capsules = state.layout.capsules
+            width, height = state.layout.width, state.layout.height
+            capsules = state.capsules
             matrix = np.zeros((height, width), dtype=np.int8)
+
             for i in capsules:
-                x,y=i
-                vx,vy = distance_vector(self.player.pos, (x,y))
-                matrix[vx][vy] += 1
+                # Insert capsule cells vertically reversed into matrix
+                matrix[-1-i[1], i[0]] = 1
+
             return matrix
 
         # Create observation matrix as a combination of
         # wall, pacman, ghost, food and capsule matrices
-        # width, height = state.layout.width, state.layout.height
-        # width, height = self.params['width'], self.params['height']
-        observation = np.zeros((6, SIGHT, SIGHT))
+        # width, height = state.layout.width, state.layout.height 
+        width, height = self.params['width'], self.params['height']
+        observation = np.zeros((6, height, width))
 
         observation[0] = getWallMatrix(state)
         observation[1] = getPacmanMatrix(state)
@@ -401,14 +410,6 @@ def to_screen_axis(p, max) :
 def bounded(p, w, h) :
     return p[0] >= 0 and p[1] >=0 and p[0] < w and p[1] < h
 
-def to_point_in_map(pos, rpos, sight):
-    d = sight // 2
-    return (pos[0] + rpos[0] - d, pos[1] + rpos[1] - d)
-
-def to_point_in_viewport(pos, gpos, sight) :
-    d = sight // 2
-    return (int(gpos[0] - (pos[0] - d)), int(gpos[1] - (pos[1] - d)))
-
 
 # 变换坐标系函数
 # 将源点变成t
@@ -418,15 +419,3 @@ def change_axis(o) :
         return p[0] + dx, p[1] + dy
     return inner
 
-
-def distance_vector(origin, target):
-    ox,oy = origin
-    tx,ty = target
-    vx, vy = tx - ox, ty - oy
-
-    d = SIGHT // 2
-    if abs(vx) > d:
-        vx = d * (1 if vx > 0 else -1)
-    if abs(vy) > d:
-        vy = d * (1 if vy > 0 else -1)
-    return vx, vy

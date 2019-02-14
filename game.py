@@ -71,7 +71,7 @@ class Game:
         else:
             print('{0}, pacman win, pacman({1}), ghost({2}), eps={3}, rate={4:.2f}'.format(
                 rnd, self.state.pacmanScore, self.state.ghostScore, eps, self.rate))
-        print('avg_rate', self.avg_rate)
+        print('avg_rate : %.3f' % self.avg_rate)
 
     # 原来调用Agent的回调方法
 
@@ -120,7 +120,6 @@ class Game:
         self.notifyAgentHooks('init')
         while(result == 0):
 
-            self.notifyAgentHooks('observationFunction')
             alivePlayers = state.alivePlayers()
             for player in alivePlayers:
 
@@ -129,6 +128,10 @@ class Game:
                 action = player.getAction(state)
 
                 state.next(player, action)
+                if(player.pos[0] < 0 and player.pos[1] < 0) :
+                    print(player.isPacman, player.pos, action)
+                    import sys
+                    sys.exit()
                 result = state.whoWins()
 
                 if result != 0:
@@ -136,12 +139,14 @@ class Game:
             if self.params['numTraining'] < rnd:
                 self.display.update(state, rnd)
 
+            self.notifyAgentHooks('observationFunction')
             eps += 1
 
         self.notifyAgentHooks('final')
+        R = max(rnd, 100)
         self.rate = 1 - (state.food.count() /
                          state.total_food) if state.total_food > 0 else 0
-        self.avg_rate = self.avg_rate * (rnd-1) / (rnd) + self.rate / rnd
+        self.avg_rate = self.avg_rate * (R-1) / (R) + self.rate / R 
         self.printResult(rnd, result, state, eps)
 
 
