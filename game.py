@@ -166,9 +166,9 @@ class Game:
                     import sys
                     sys.exit()
                 result = state.whoWins()
-
                 if result != 0:
                     break
+                self.notifyAgentHooks('observationFunction')
             if self.params['numTraining'] < rnd:
                 self.display.update(state, rnd)
 
@@ -180,8 +180,8 @@ class Game:
         self.rate = 1 - (state.food.count() /
                          state.total_food) if state.total_food > 0 else 0
         self.avg_rate = self.avg_rate * (R-1) / (R) + self.rate / R
-        if rnd % 10 == 0:
-            self.printResult(rnd, result, state, eps)
+        # if rnd % 10 == 0:
+        self.printResult(rnd, result, state, eps)
 
 
 class Display:

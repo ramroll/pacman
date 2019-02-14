@@ -75,7 +75,7 @@ class State:
             # elif player.moves > 100 :
             #   time_p = 3
 
-            if player.moves > 300:
+            if player.moves > 100:
                 player.alive = False
                 return
 

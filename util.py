@@ -20,6 +20,7 @@ import io
 import math
 import numpy as np  
 from actions import Actions
+import util
 
 class FixedRandom:
 
@@ -795,11 +796,24 @@ def getFeatures(player, state, action) :
     ghosts = state.aliveGhosts()
     features['1-step-away-capsules'] = sum((next_x, next_y) in Actions.getLegalNeighbors(c, walls) for c in state.capsules)
 
-    if not features['1-step-away-capsules'] :
-      features['1-step-away-ghosts'] = sum((next_x, next_y) in Actions.getLegalNeighbors(g.pos, walls) for g in ghosts)
-      if not features["1-step-away-ghosts"] and food[next_x][next_y]:
+    features['1-step-away-ghosts'] = sum((next_x, next_y) in Actions.getLegalNeighbors(g.pos, walls) for g in ghosts)
+    if not features["1-step-away-ghosts"] and food[next_x][next_y]:
         features["eats-food"] = 1.0
     
+    ghosts = state.aliveGhosts()
+
+    if player.super > 0: 
+        features['super']  = 1.0
+    nearestGhost = None
+    minG = 1e10
+    for g in ghosts:
+        d = util.manhattanDistance(g.pos, player.pos)
+        if minG > d :
+            minG = d
+            nearestGhost = g
+    
+    features['nearest-ghost'] = float(minG) / (walls.width * walls.height)
+
     dist = closestFood(player.pos, food, walls)
     if dist is not None:
       features["closest-food"] = float(dist) / (walls.width * walls.height)
