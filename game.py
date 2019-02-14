@@ -28,7 +28,7 @@ class Game:
         players = [p for p in self.players if not p.isPacman]
         for isPacman, pos, super in layout.agentPositions:
             if not isPacman:
-                players.append(Player(False, (int(pos[0]), int(pos[1])), 0, 0)
+                players.append(Player(False, (int(pos[0]), int(pos[1])), 0, 0))
         
         self.players = players
         self.state.players = players
@@ -166,9 +166,9 @@ class Game:
                     import sys
                     sys.exit()
                 result = state.whoWins()
-
                 if result != 0:
                     break
+                self.notifyAgentHooks('observationFunction')
             if self.params['numTraining'] < rnd:
                 self.display.update(state, rnd)
 

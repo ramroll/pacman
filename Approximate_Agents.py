@@ -87,7 +87,7 @@ class ApproximateAgent:
 
   def getQValue(self, state, action) :
     QValue = 0.0
-    features = self.getFeatures(state, action)
+    features = util.getFeatures(self.player, state, action)
     for feature in features :
       if not feature in self.weights :
         self.weights[feature] = 0
@@ -100,7 +100,7 @@ class ApproximateAgent:
     if len(legalActions) == 0:
       return action
 
-    if np.random.rand() > self.eps :
+    if self.player.index != 0 or np.random.rand() > self.eps :
       action = self.computeActionFromQValues(state) 
     else :
       action = random.choice(legalActions)
@@ -111,6 +111,8 @@ class ApproximateAgent:
     
   def observationFunction(self, newState) :
 
+    if self.player.index != 0:
+      return
 
       
     pos = self.player.pos
@@ -121,7 +123,7 @@ class ApproximateAgent:
     self.last_pos = pos
     if self.last_action is not None :
 
-      features = self.getFeatures(state, action)
+      features = util.getFeatures(self.player, state, action)
 
       self.current_score = state.pacmanScore
       reward = self.current_score - self.last_score
@@ -147,6 +149,8 @@ class ApproximateAgent:
 
 
   def final(self, state) :
+    if self.player.index != 0:
+      return
     self.cnt += 1
 
 
