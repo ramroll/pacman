@@ -2,6 +2,7 @@ from os import system, name
 from player import Player
 from state import State
 import time
+import util
 # from graphicsUtils import *
 
 
@@ -19,6 +20,31 @@ class Game:
         # 平均比例
         self.avg_rate = 0
 
+    def nextRound(self, layout):
+        newState = State(layout)
+
+        ghost_pos = []
+        for isPacman, pos, super in layout.agentPositions:
+            if not isPacman:
+                ghost_pos.append(pos)
+
+        # 更新Ghost状态
+        for player in self.players:
+            if not player.isPacman and player.alive:
+                pos = player.pos
+                minDist = 2
+                g_pos = None
+                for (x, y) in ghost_pos:
+                    dist = int(util.manhattanDistance((x, y), pos))
+                    if dist < minDist:
+                        minDist = dist
+                        g_pos = (x, y)
+                if minDist == 0 or minDist == 1:
+                    ghost_pos.remove(g_pos)
+                    player.pos = g_pos
+                else:
+                    player.alive = False
+
     def createPlayers(self):
         players = []
         agentParams = {
@@ -27,9 +53,7 @@ class Game:
         }
 
         i = 0
-        print('agentPositions: ', self.layout.agentPositions)
-        for isPacman, pos, super in self.layout.agentPositions:
-            print('xxxxxxxx')
+        for isPacman, pos, super in self.state.layout.agentPositions:
             player = Player(isPacman, (int(pos[0]), int(pos[1])), i, super)
             print('2222')
             i += 1
@@ -99,11 +123,12 @@ class Game:
         }
         dirs = dict()
         for player in alivePlayers:
-            print('player: ', player)
             if not player.alive:
                 continue
-            action = player.getAction(state)
+
             if player.isPacman:
+                action = player.getAction(state)
+                state.next(player, action)
                 dirs[pacmanCount] = direct[action]
                 pacmanCount += 1
         return {'dirs': dirs}
@@ -125,13 +150,13 @@ class Game:
 
             alivePlayers = state.alivePlayers()
             for player in alivePlayers:
-                
+
                 if not player.alive:
                     continue
                 action = player.getAction(state)
 
                 state.next(player, action)
-                if(player.pos[0] < 0 and player.pos[1] < 0) :
+                if(player.pos[0] < 0 and player.pos[1] < 0):
                     print(player.isPacman, player.pos, action)
                     import sys
                     sys.exit()
@@ -149,8 +174,8 @@ class Game:
         R = max(rnd, 100)
         self.rate = 1 - (state.food.count() /
                          state.total_food) if state.total_food > 0 else 0
-        self.avg_rate = self.avg_rate * (R-1) / (R) + self.rate / R 
-        if rnd % 10 == 0 :
+        self.avg_rate = self.avg_rate * (R-1) / (R) + self.rate / R
+        if rnd % 10 == 0:
             self.printResult(rnd, result, state, eps)
 
 

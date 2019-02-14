@@ -166,9 +166,6 @@ class Layout:
     def refreshLayout(self, dots):
         layoutText = self.layoutText.copy()
         maxY = self.height - 1
-        print('layoutText: ', layoutText)
-        print('height: ', self.height)
-        print('width: ', self.width)
         for y in range(len(layoutText[0])):
             for x in range(len(layoutText)):
                 layoutChar = str(layoutText[x][y])
@@ -188,7 +185,6 @@ class Layout:
             layoutText[value['x']][value['y']] = 4
         for value in ghosts.values():
             layoutText[value['x']][value['y']] = 5
-        print('new layoutText: ', layoutText)
         return Layout(layoutText, pacmanFeast)
 
 

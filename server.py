@@ -59,7 +59,7 @@ class Resquest(BaseHTTPRequestHandler):
         params = self.rfile.read(
             int(self.headers['content-length']))
         jsonData = json.loads(params)
-        global pixels, width, height, args, agentOpts
+        global pixels, width, height, args, agentOpts, game
         # 初始化地图
         if 'map' in jsonData:
             pixels = jsonData['map']['pixels']
@@ -72,7 +72,7 @@ class Resquest(BaseHTTPRequestHandler):
             agentOpts['numTraining'] = 2950
             args['layout'] = layout.initLayout(pixels)
             args['numTraining'] = 2950
-            args['pacmanType'] = loadAgent('SmartDQNAgent', False)
+            args['pacmanType'] = loadAgent('FinalAgent', False)
             args['ghostType'] = loadAgent('RandomGhost', False)
             # args['display'] = graphicsDisplay.PacmanGraphics(1.0, 0.1)
             args['numGames'] = 3000
@@ -80,16 +80,18 @@ class Resquest(BaseHTTPRequestHandler):
             args['catchExceptions'] = False
             args['timeout'] = 30
             args['agentOpts'] = agentOpts
+            game = Game(args)
+            game.notifyAgentHooks('init')
             # self.game = Game(self.args)
             # game.run()
         elif 'pacDots' in jsonData:
             args['pacmanFeast'] = jsonData['pacmanFeast']
             args['layout'] = args['layout'].refreshLayout(jsonData)
-            print('refreshed...')
-            game = Game(args)
-            print('gaming...')
+            # game = Game(args)
+            game.nextRound(args['layout'])
             nextMove = game.hintNextMove()
-            print('nextMove: ', nextMove)
+            print(nextMove)
+            print(game.state)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
