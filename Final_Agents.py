@@ -26,36 +26,37 @@ params = {
     'load_file': 'saves/approximate',
 }
 
+
 class FinalAgent:
 
     def __init__(self, player, args):
         self.player = player
-        self.weights = {} 
+        self.weights = {}
         self.params = params
         self.load()
 
-    def updateRnd(self, rnd) :
+    def updateRnd(self, rnd):
         self.ipath = None
         self.t = None
         if self.player.pos == (6, 5):
             self.t = (1, 11)
-        elif self.player.pos == (10, 5) :
+        elif self.player.pos == (10, 5):
             self.t = (1, 1)
-        elif self.player.pos == (14, 13) :
+        elif self.player.pos == (14, 13):
             self.t = (25, 17)
-        elif self.player.pos == (17, 13) :
+        elif self.player.pos == (17, 13):
             self.t = (25, 5)
         self.ipath = []
 
         self.rnd = rnd
         if self.t:
-            self.ipath = astar(self.player.pos, self.t, state.layout.walls, state.layout.width, state.layout.height)
- 
+            self.ipath = astar(self.player.pos, self.t, state.layout.walls,
+                               state.layout.width, state.layout.height)
 
-    def getLegalActions(self, state) :
+    def getLegalActions(self, state):
         return Actions.getPossibleActions(self.player.pos, state.layout.walls)
 
-    def computeActionFromQValues(self, state) :
+    def computeActionFromQValues(self, state):
 
         legalActions = self.getLegalActions(state)
         if len(legalActions) == 0:
@@ -70,58 +71,52 @@ class FinalAgent:
                 QValue = QValueTemp
         return action
 
-    def getQValue(self, state, action) :
+    def getQValue(self, state, action):
         QValue = 0.0
-        features = util.getFeatures(self.player,state, action)
-        for feature in features :
-            if not feature in self.weights :
+        features = util.getFeatures(self.player, state, action)
+        for feature in features:
+            if not feature in self.weights:
                 self.weights[feature] = 0
             QValue += features[feature] * self.weights[feature]
         return QValue
 
-    def init(self, state) :
+    def init(self, state):
         self.ipath = None
         self.t = None
-
         if self.player.pos == (6, 5):
             self.t = (1, 11)
-        elif self.player.pos == (10, 5) :
+        elif self.player.pos == (10, 5):
             self.t = (1, 1)
-        elif self.player.pos == (14, 13) :
+        elif self.player.pos == (14, 13):
             self.t = (25, 17)
-        elif self.player.pos == (17, 13) :
+        elif self.player.pos == (17, 13):
             self.t = (25, 5)
         self.ipath = []
 
         if self.t:
-            self.ipath = astar(self.player.pos, self.t, state.layout.walls, state.layout.width, state.layout.height)
-
+            self.ipath = astar(self.player.pos, self.t, state.layout.walls,
+                               state.layout.width, state.layout.height)
 
     def getAction(self, state):
-        if len(self.ipath) > 0 :
+        if len(self.ipath) > 0:
             t = self.ipath[0]
 
             self.ipath.remove(self.ipath[0])
 
-            action = Actions.vectorToDirection((t[0] - self.player.pos[0], t[1] - self.player.pos[1]))
+            action = Actions.vectorToDirection(
+                (t[0] - self.player.pos[0], t[1] - self.player.pos[1]))
 
             return action
-        else :
+        else:
 
             return self.computeActionFromQValues(state)
-            
+
         return Directions.STOP
 
+    def load(self):
 
-
-    def load(self) :
-
-        if self.params['load_file'] :
+        if self.params['load_file']:
             with open(self.params['load_file']) as f:
                 s = f.read()
                 obj = ast.literal_eval(s)
                 self.weights = obj['weights']
-
-            
-                
-
