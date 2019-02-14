@@ -24,26 +24,31 @@ class Game:
         newState = State(layout)
 
         ghost_pos = []
+        ghosts = []
+        players = [p for p in self.players if not p.isPacman]
         for isPacman, pos, super in layout.agentPositions:
             if not isPacman:
-                ghost_pos.append(pos)
+                players.append(Player(False, (int(pos[0]), int(pos[1])), 0, 0)
+        
+        self.players = players
+        self.state.players = players
 
-        # 更新Ghost状态
-        for player in self.players:
-            if not player.isPacman and player.alive:
-                pos = player.pos
-                minDist = 2
-                g_pos = None
-                for (x, y) in ghost_pos:
-                    dist = int(util.manhattanDistance((x, y), pos))
-                    if dist < minDist:
-                        minDist = dist
-                        g_pos = (x, y)
-                if minDist == 0 or minDist == 1:
-                    ghost_pos.remove(g_pos)
-                    player.pos = g_pos
-                else:
-                    player.alive = False
+        # # 更新Ghost状态
+        # for player in self.players:
+        #     if not player.isPacman and player.alive:
+        #         pos = player.pos
+        #         minDist = 2
+        #         g_pos = None
+        #         for (x, y) in ghost_pos:
+        #             dist = int(util.manhattanDistance((x, y), pos))
+        #             if dist < minDist:
+        #                 minDist = dist
+        #                 g_pos = (x, y)
+        #         if minDist == 0 or minDist == 1:
+        #             ghost_pos.remove(g_pos)
+        #             player.pos = g_pos
+        #         else:
+        #             player.alive = False
 
     def createPlayers(self):
         players = []
