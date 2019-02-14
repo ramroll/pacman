@@ -150,7 +150,6 @@ class Layout:
             self.food[x][y] = True
         # capsules
         elif layoutChar == '3':
-            print('capsule')
             self.capsules.append((x, y))
         # pacman
         elif layoutChar == '4':
@@ -167,8 +166,11 @@ class Layout:
     def refreshLayout(self, dots):
         layoutText = self.layoutText.copy()
         maxY = self.height - 1
-        for y in range(self.height):
-            for x in range(self.width):
+        print('layoutText: ', layoutText)
+        print('height: ', self.height)
+        print('width: ', self.width)
+        for y in range(len(layoutText[0])):
+            for x in range(len(layoutText)):
                 layoutChar = str(layoutText[x][y])
                 if layoutChar in ['2', '3', '4', '5']:
                     layoutText[x][y] = 0
@@ -186,6 +188,7 @@ class Layout:
             layoutText[value['x']][value['y']] = 4
         for value in ghosts.values():
             layoutText[value['x']][value['y']] = 5
+        print('new layoutText: ', layoutText)
         return Layout(layoutText, pacmanFeast)
 
 

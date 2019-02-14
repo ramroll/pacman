@@ -26,12 +26,16 @@ class Game:
         }
 
         i = 0
+        print('agentPositions: ', self.layout.agentPositions)
         for isPacman, pos, super in self.layout.agentPositions:
+            print('xxxxxxxx')
             player = Player(isPacman, (int(pos[0]), int(pos[1])), i, super)
+            print('2222')
             i += 1
             player.setAgent(
                 self.pacmanType if isPacman else self.ghostType, self.state, agentParams)
             players.append(player)
+        print('createplayers end...')
         return players
 
     def initialize(self, layout):
@@ -81,6 +85,7 @@ class Game:
     # 提示下一步
 
     def hintNextMove(self):
+        print('hintNextMove...')
         state = self.state
         alivePlayers = state.alivePlayers()
         pacmanCount = 0
@@ -93,6 +98,7 @@ class Game:
         }
         dirs = dict()
         for player in alivePlayers:
+            print('player: ', player)
             if not player.alive:
                 continue
             action = player.getAction(state)

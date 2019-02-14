@@ -13,7 +13,7 @@ from state import State
 # import graphicsDisplay
 
 data = {'result': 'this is a test'}
-host = ('pacman', 1080)
+host = ('', 1080)
 pixels = []
 width = 0
 height = 0
@@ -31,7 +31,7 @@ def loadAgent(pacman, nographics):
         pythonPathDirs = pythonPathStr.split(';')
     pythonPathDirs.append('.')
 
-    for moduleDir in pythonPathDirs:
+    for moduleDir in ['.']:
         if not os.path.isdir(moduleDir):
             continue
         moduleNames = [f for f in os.listdir(
@@ -85,8 +85,11 @@ class Resquest(BaseHTTPRequestHandler):
         elif 'pacDots' in jsonData:
             args['pacmanFeast'] = jsonData['pacmanFeast']
             args['layout'] = args['layout'].refreshLayout(jsonData)
+            print('refreshed...')
             game = Game(args)
+            print('gaming...')
             nextMove = game.hintNextMove()
+            print('nextMove: ', nextMove)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
