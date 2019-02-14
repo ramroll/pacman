@@ -59,7 +59,7 @@ class Resquest(BaseHTTPRequestHandler):
         params = self.rfile.read(
             int(self.headers['content-length']))
         jsonData = json.loads(params)
-        global pixels, width, height, args, agentOpts
+        global pixels, width, height, args, agentOpts,game
         # 初始化地图
         if 'map' in jsonData:
             pixels = jsonData['map']['pixels']
@@ -80,12 +80,15 @@ class Resquest(BaseHTTPRequestHandler):
             args['catchExceptions'] = False
             args['timeout'] = 30
             args['agentOpts'] = agentOpts
+            game = Game(args)
             # self.game = Game(self.args)
             # game.run()
         elif 'pacDots' in jsonData:
             args['pacmanFeast'] = jsonData['pacmanFeast']
             args['layout'] = args['layout'].refreshLayout(jsonData)
-            game = Game(args)
+
+            game.nextRound()
+            # game = Game(args)
             nextMove = game.hintNextMove()
             self.send_response(200)
             self.send_header('Content-type', 'application/json')

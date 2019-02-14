@@ -18,7 +18,16 @@ class Game:
         self.rate = 0
         # 平均比例
         self.avg_rate = 0
+    
+    def nextRound(self) :
+        self.state.refresh()
+        for player in self.players :
+            player.refresh()
+            if 'init' in dir(player.agent) :
+                player.agent.init()
+         
 
+       
     def createPlayers(self):
         players = []
         agentParams = {
