@@ -10,7 +10,6 @@ class State :
     self.pacmanScore = 0
     self.ghostScore = layout.food.count() * 10
 
-    self.t_h = {}
     ## For graphics
     self._foodEaten = None
     self._capsuleEaten = None
@@ -77,6 +76,10 @@ class State :
       # elif player.moves > 100 : 
       #   time_p = 3
 
+      if player.moves > 300 :
+        player.alive = False
+        return
+
       self.pacmanScore += TIME_PENALTY      
       g = self.aliveGhosts()
       collision = [x for x in g if x.pos == player.pos]
@@ -128,11 +131,16 @@ class State :
     alivePacmans = self.alivePacmans()
     return [x.pos for x in alivePacmans]
 
+  def hash(self, action):
+    hash_food = hash(self.food)
+    hash_players = '-'.join([x.hash() for x in self.players])
+    
+    return 'f{0}p{1}|{2}'.format(hash_food, hash_players,action)
 
-  def __hash__(self) :
-    h = hash(tuple(self.players))
-    k = hash(self.food) 
-    return hash(h + 17*k + 113 * hash(tuple(self.capsules)))
+  def hash1(self, action, player):
+    hash_food = hash(self.food)
+    hash_players = '-'.join([x.hash() for x in self.players if x.index == player.index or x.isPacman is not True])
+    return 'f{0}p{1}|{2}'.format(hash_food, hash_players,action)
 
 
   def __str__(self):
