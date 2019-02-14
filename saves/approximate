@@ -1,1 +1,1 @@
-{'weights': {'bias': 201.41405024575744, '1-step-away-ghosts': -531.1456342125731, 'eats-food': 55.54452544903945, 'closest-food': 0.7781564485633714, '1-step-away-capsules': 3.030806076331573}, 'eps': 0.1, 'cnt': 20000, 'numeps': 20000}
+{'weights': {'bias': 279.53046058673874, '1-step-away-ghosts': -302.12569487139746, 'eats-food': -18.64370081314424, 'closest-food': 0.8333088769109047, '1-step-away-capsules': 4.304640360883933, 'nearest-ghost': -0.6701482319786557, 'super': 3.5739391312978883}, 'eps': 0.1, 'cnt': 11500, 'numeps': 11500}

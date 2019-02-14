@@ -56,7 +56,7 @@ class FastDQNAgent:
 
     self.exps = deque()
     # self.player_hash = {}
-    self.load()
+    # self.load()
   
   def getLegalActions(self, state, pos) :
     return Actions.getPossibleActions(pos, state.layout.walls)
@@ -69,7 +69,7 @@ class FastDQNAgent:
         terminal state, you should return a value of 0.0.
       """
       "*** YOUR CODE HERE ***"
-      qvalues = [self.getQValue(state, action) for action in self.getLegalActions(state, pos)]
+      qvalues = [self.getQValue(state, pos, action) for action in self.getLegalActions(state, pos)]
       if not len(qvalues): return 0.0
       return max(qvalues)
 
@@ -82,14 +82,56 @@ class FastDQNAgent:
     QValue = -1e10
 
     for legalAction in legalActions:
-      QValueTemp = self.getQValue(state, legalAction)
+      QValueTemp = self.getQValue(state, self.player.pos, legalAction)
       if QValueTemp > QValue:
         action = legalAction
         QValue = QValueTemp
     return action
+  
+  def hash_state(self, state, pos, action) :
 
-  def getQValue(self, state, action) :
-    h = state.hash(action)
+    # 7*7 = 49 
+    # 0-1-2-3-4
+    def hash_array(arr) :
+      base = 1
+      h = 0
+      for row in arr:
+        for l in row:
+          if l:
+            h += base
+          base *= 2
+      return h
+
+
+    SIGHT = 7
+
+    walls = np.zeros((SIGHT, SIGHT))
+    foods = np.zeros((SIGHT, SIGHT))
+    capsules = np.zeros((SIGHT,SIGHT))
+    px, py = pos
+    
+    for x in range(SIGHT) :
+      for y in range(SIGHT) :
+        oo = SIGHT // 2
+        sx, sy = x + (px - oo), y + (py - oo)
+        if sx >= 0 and sy >= 0 and sx < state.layout.width and sy < state.layout.height  :
+          if state.layout.walls[sx][-1-sy] :
+            walls[y][x] = 1
+          if state.layout.food[sx][sy]  :
+            foods[x][y] = 1
+          if (sx, sy) in state.capsules:
+            capsules[x][y] = 1
+          
+    h_walls = hash_array(walls) % 47269
+    h_foods = hash_array(foods) % 30841
+    h_capsule = hash_array(capsules) % 3323
+    h_players = hash(tuple([p for p in state.players if p.alive and p.isPacman == False]))
+    s_hash = h_walls * 7 + h_foods * 13 + h_capsule * 19 + h_players * 31
+    return str(s_hash) + '-' + action
+
+  def getQValue(self, state, pos, action) :
+    # h = state.hash(action)
+    h = self.hash_state(state, pos, action)
     # print(h)
     return 0.0 if h not in self.QValues else self.QValues[h]
 
@@ -116,7 +158,7 @@ class FastDQNAgent:
     for (state, newState, pos, newPos, reward) in smp:
       action = Actions.vectorToDirection((newPos[0] - pos[0], newPos[1] - pos[1])) 
 
-      curQValue = self.getQValue(state, action)
+      curQValue = self.getQValue(state, pos, action)
       # print('\n-------')
       # print(state)
       # print('->', action)
@@ -131,8 +173,8 @@ class FastDQNAgent:
       #   print('lscore=%2d,nscore=%2d,reward=%2d,curQ=%.2f, nxtQ=%.2f' % 
       #     (state.pacmanScore, newState.pacmanScore,newState.pacmanScore - state.pacmanScore, curQValue, nextQValue))
       #   raise 'hhh'
-      self.QValues[state.hash(action)] = nextQValue
-      self.state_hash[state.hash(action)] = 1
+      self.QValues[self.hash_state(state, pos, action)] = nextQValue
+      # self.state_hash[state.hash(action)] = 1
       self.eps = max(self.params['eps_final'], 1.00 - float(self.cnt) / float(self.params['eps_step']))
         
     # sys.exit()
@@ -176,8 +218,6 @@ class FastDQNAgent:
 
   def final(self, state) :
     self.cnt += 1
-    if self.cnt % 10 != 0 :
-      return
     # Print stats
     # log_file = open('./logs/'+str(self.general_record_time)+'-l-'+str(self.params['width'])+'-m-'+str(
     #     self.params['height'])+'-x-'+str(self.params['num_training'])+'.log', 'a')

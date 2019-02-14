@@ -168,7 +168,7 @@ class ApproximateAgent:
       # sys.stdout.write("| Q: %10f | won: %r \n" %
       sys.stdout.flush()
 
-    if self.cnt > 0 and  self.cnt % 5000 == 0:  
+    if self.cnt > 0 and  self.cnt % 500 == 0:  
       print('save')
       self.save()
   
