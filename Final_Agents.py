@@ -34,6 +34,23 @@ class FinalAgent:
         self.params = params
         self.load()
 
+    def updateRnd(self, rnd) :
+        self.ipath = None
+        self.t = None
+        if self.player.pos == (6, 5):
+            self.t = (1, 11)
+        elif self.player.pos == (10, 5) :
+            self.t = (1, 1)
+        elif self.player.pos == (14, 13) :
+            self.t = (25, 17)
+        elif self.player.pos == (17, 13) :
+            self.t = (25, 5)
+        self.ipath = []
+
+        self.rnd = rnd
+        if self.t:
+            self.ipath = astar(self.player.pos, self.t, state.layout.walls, state.layout.width, state.layout.height)
+ 
 
     def getLegalActions(self, state) :
         return Actions.getPossibleActions(self.player.pos, state.layout.walls)

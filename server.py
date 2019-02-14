@@ -81,15 +81,15 @@ class Resquest(BaseHTTPRequestHandler):
             args['timeout'] = 30
             args['agentOpts'] = agentOpts
             game = Game(args)
+            game.notifyAgentHooks('init')
             # self.game = Game(self.args)
             # game.run()
         elif 'pacDots' in jsonData:
             args['pacmanFeast'] = jsonData['pacmanFeast']
             args['layout'] = args['layout'].refreshLayout(jsonData)
-
-            game.nextRound()
             # game = Game(args)
-            nextMove = game.hintNextMove()
+            game.nextRound(args['layout'])
+            nextMove = game.hintNextMove(rnd)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()

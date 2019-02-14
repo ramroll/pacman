@@ -2,6 +2,7 @@ from os import system, name
 from player import Player
 from state import State
 import time
+from state import Stat
 # from graphicsUtils import *
 
 
@@ -19,16 +20,51 @@ class Game:
         # 平均比例
         self.avg_rate = 0
     
-    def nextRound(self) :
-        self.state.refresh()
-        for player in self.players :
-            player.refresh()
-            if 'init' in dir(player.agent) :
-                player.agent.init()
+    def nextRound(self, layout) :
+        newState = State(layout)
+
+        ghost_pos = []
+        for isPacman, pos, super in layout.agentPositions:
+            if not isPacman:
+                ghost_pos.append(pos)
+            
+        # 更新Ghost状态
+        for player in self.players:
+            if not player.isPacman and player.alive:
+                pos = player.pos
+                minDist = 2
+                g_pos = None
+                for (x,y) in ghost_pos:
+                    dist = int(util.manhattanDistance((x,y), pos))
+                    if dist < maxDist :
+                        minDist = dist 
+                        g_pos = (x,y)
+                if minDist == 0 or minDist == 1:
+                    ghost_pos.remove(g_pos)
+                    player.pos = g_pos
+                else :
+                    player.alive = False
+                
+
+
+
+
+
+
+
+
+        i = 0
+        for isPacman, pos, super in layout.agentPositions:
+            player = Player(isPacman, (int(pos[0]), int(pos[1])), i, super)
+            i += 1
+            player.setAgent(
+                self.pacmanType if isPacman else self.ghostType, state, agentParams)
+            players.append(player)
+        return players
          
 
        
-    def createPlayers(self):
+    def createPlayers(self, layout, state):
         players = []
         agentParams = {
             'num_training': self.params['numTraining'],
@@ -36,11 +72,11 @@ class Game:
         }
 
         i = 0
-        for isPacman, pos, super in self.layout.agentPositions:
+        for isPacman, pos, super in layout.agentPositions:
             player = Player(isPacman, (int(pos[0]), int(pos[1])), i, super)
             i += 1
             player.setAgent(
-                self.pacmanType if isPacman else self.ghostType, self.state, agentParams)
+                self.pacmanType if isPacman else self.ghostType, state, agentParams)
             players.append(player)
         return players
 
