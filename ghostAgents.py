@@ -18,7 +18,7 @@ import random
 from util import manhattanDistance
 import util
 import numpy as np
-
+from util import manhattanDistance, astar
 
 class GhostAgent:
 
@@ -57,16 +57,7 @@ class RandomGhost(GhostAgent):
         return dist
 
 
-def minItem(list, prediction) :
-    
-    minValue = 9999999
-    minItem = None
-    for item in list :
-        v = prediction(item)
-        if minValue > v :
-            minValue = v
-            minItem = item
-    return minItem
+
 
 
 
@@ -79,55 +70,7 @@ class AstarGhost(GhostAgent) :
         pacmans = state.alivePacmans()
 
 
-        def astar(s, t, walls, width, height) :
-            openList = [s]
-            mapShape = (width, height)
-            close_table = np.zeros(mapShape)
-            h_table = np.zeros(mapShape)
-            g_table = np.zeros(mapShape)
 
-            parent = {} 
-
-
-            
-            while(len(openList) > 0 and not close_table[t[0], t[1]]) :
-                minF = minItem(openList, lambda x : g_table[x[0] , x[1]] + h_table[x[0] , x[1]])
-                openList.remove(minF)
-                # 当前f值最小的点
-                fx, fy = minF
-                close_table[fx, fy] = 1
-
-                for i in range(-1, 2):
-                    for j in range(-1, 2):
-                        if (abs(i) != abs(j)) :
-                            x, y = fx + i, fy + j
-
-                            if not (x >= 0 and y >= 0 and x < width and y < height):
-                                continue
-
-                            if walls[x][y] :
-                                continue
-                            
-                            if close_table[x,y] :
-                                continue
-                            
-                            if not (x, y) in openList :
-                                openList.append((x, y))
-                                g_table[x, y] = g_table[fx, fy] + 1
-                                h_table[x, y] =  manhattanDistance((x, y), t) 
-                                parent[(x, y)] = (fx, fy) 
-                            else :
-                                if g_table[x,y] > g_table[fx, fy] + 1 :
-                                    parent[(x, y)] = (fx, fy) 
-                                    g_table[x, y] = g_table[fx, fy] + 1
-            path = []
-            m = t
-            while m in parent.keys():
-                p = parent[m]
-                path.append(p)
-                m = p
-            path.reverse()
-            return path
         
         # paths = [astar(self.player.pos, p.pos, state.layout.walls, state.layout.width, state.layout.height) for p in  pacmans]
 
@@ -141,17 +84,37 @@ class AstarGhost(GhostAgent) :
                 nearestPath = path
                 minPath = len(path)
         
-        if not nearestPath or len(nearestPath) < 2:
-            return Directions.STOP
+        rnd=True
 
-        tx, ty = nearestPath[1]
-        sx, sy = self.player.pos 
-        action = Actions.vectorToDirection((tx - sx, ty - sy) )
-        if nearestPacman.super:
-            action = Actions.reverseDirection(action)
-        legalActions = Actions.getPossibleActions(self.player.pos, state.layout.walls)
-        if not action in legalActions :
-            action = random.choice(legalActions)
+        if len(nearestPath) > 0 :
+            tx, ty = nearestPath[0]
+            sx, sy = self.player.pos 
+            action = Actions.vectorToDirection((tx - sx, ty - sy) )
+
+            reverseAct = False
+            if nearestPath[0] in state.capsules and len(nearestPath) == 2:
+               reverseAct = True
+          
+            if nearestPacman.super:
+                reverseAct = True
+            
+            if reverseAct :
+                nbrs = Actions.getLegalNeighbors(self.player.pos, state.layout.walls)
+
+                maxDist = -1
+                bestChoice = None
+                for n in nbrs :
+                    dist = util.distance( nearestPacman.pos, n)
+                    if dist > maxDist :
+                        maxDist = dist
+                        bestChoice = n
+
+                bestAction = Actions.vectorToDirection((bestChoice[0] - sx, bestChoice[1]-sy))
+                action = bestAction
+                # print(state)
+                # print(nearestPath)
+                # print(bestAction)
+                # sys.exit()
         return action
                
 

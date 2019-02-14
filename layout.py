@@ -150,7 +150,6 @@ class Layout:
             self.food[x][y] = True
         # capsules
         elif layoutChar == '3':
-            print('capsule')
             self.capsules.append((x, y))
         # pacman
         elif layoutChar == '4':

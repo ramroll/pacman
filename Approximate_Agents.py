@@ -29,27 +29,7 @@ params = {
     'eps_final': 0.1,       # Epsilon end value
     'eps_step': 10000       # Epsilon steps between start and end (linear)
 }
-def closestFood(pos, food, walls):
-    """
-    closestFood -- this is similar to the function that we have
-    worked on in the search project; here its all in one place
-    """
-    fringe = [(pos[0], pos[1], 0)]
-    expanded = set()
-    while fringe:
-        pos_x, pos_y, dist = fringe.pop(0)
-        if (pos_x, pos_y) in expanded:
-            continue
-        expanded.add((pos_x, pos_y))
-        # if we find a food at this location then exit
-        if food[pos_x][pos_y]:
-            return dist
-        # otherwise spread out from the location to its neighbours
-        nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
-        for nbr_x, nbr_y in nbrs:
-            fringe.append((nbr_x, nbr_y, dist+1))
-    # no food found
-    return None
+
 class ApproximateAgent:
 
   def __init__(self, player, args) :
@@ -73,6 +53,7 @@ class ApproximateAgent:
     self.last_pos = self.player.pos
     self.weights = {} 
     self.load()
+
   
   def getLegalActions(self, state) :
     return Actions.getPossibleActions(self.player.pos, state.layout.walls)
@@ -126,28 +107,7 @@ class ApproximateAgent:
     return action
     
     
-  def getFeatures(self, state, action) :
-    features = util.Counter() 
-    walls = state.layout.walls
-    food = state.layout.food
-    features['bias'] = 1.0
-    x, y = self.player.pos
-    dx, dy = Actions.directionToVector(action)
-    next_x, next_y = int(x + dx), int(y + dy)
-    ghosts = state.aliveGhosts()
-    features['1-step-away-capsules'] = sum((next_x, next_y) in Actions.getLegalNeighbors(c, walls) for c in state.capsules)
 
-    if not features['1-step-away-capsules'] :
-      features['1-step-away-ghosts'] = sum((next_x, next_y) in Actions.getLegalNeighbors(g.pos, walls) for g in ghosts)
-      if not features["1-step-away-ghosts"] and food[next_x][next_y]:
-        features["eats-food"] = 1.0
-    
-    dist = closestFood(self.player.pos, food, walls)
-    if dist is not None:
-      features["closest-food"] = float(dist) / (walls.width * walls.height)
-
-    features.divideAll(10.0)
-    return features
     
   def observationFunction(self, newState) :
 
@@ -189,6 +149,8 @@ class ApproximateAgent:
   def final(self, state) :
     self.cnt += 1
 
+
+
     # Print stats
     # log_file = open('./logs/'+str(self.general_record_time)+'-l-'+str(self.params['width'])+'-m-'+str(
     #     self.params['height'])+'-x-'+str(self.params['num_training'])+'.log', 'a')
@@ -196,10 +158,11 @@ class ApproximateAgent:
     #                 (self.numeps, self.local_cnt, self.cnt, time.time()-self.s, self.ep_rew, self.params['eps']))
     # log_file.write("| Q: %10f | won: %r \n" %
     #                 ((max(self.Q_global, default=float('nan')), self.won)))
-    sys.stdout.write("# %4d | steps: %5d | t: %4f | r: %12f | e: %10f | won: %s\n" %
-                      (self.numeps, self.local_cnt, time.time()-self.s, self.ep_rew, self.eps, self.won))
-    # sys.stdout.write("| Q: %10f | won: %r \n" %
-    sys.stdout.flush()
+    if self.cnt % 10 == 0:
+      sys.stdout.write("# %4d | steps: %5d | t: %4f | r: %12f | e: %10f | won: %s\n" %
+                        (self.numeps, self.local_cnt, time.time()-self.s, self.ep_rew, self.eps, self.won))
+      # sys.stdout.write("| Q: %10f | won: %r \n" %
+      sys.stdout.flush()
 
     if self.cnt > 0 and  self.cnt % 5000 == 0:  
       print('save')

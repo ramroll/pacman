@@ -17,7 +17,9 @@ import inspect
 import heapq
 import random
 import io
-
+import math
+import numpy as np  
+from actions import Actions
 
 class FixedRandom:
 
@@ -216,6 +218,10 @@ def manhattanDistance(xy1, xy2):
     "Returns the Manhattan distance between points xy1 and xy2"
     return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
 
+def distance(p, q) :
+
+   
+    return math.sqrt( (p[0]-q[0]) * (p[0]-q[0]) + (p[1]-q[1]) * (p[1]-q[1]))
 """
   Data structures and functions useful for various course projects
 
@@ -693,3 +699,110 @@ def unmutePrint():
 
     sys.stdout = _ORIGINAL_STDOUT
     #sys.stderr = _ORIGINAL_STDERR
+
+def minItem(list, prediction) :
+    
+    minValue = 9999999
+    minItem = None
+    for item in list :
+        v = prediction(item)
+        if minValue > v :
+            minValue = v
+            minItem = item
+    return minItem
+
+
+def astar(s, t, walls, width, height) :
+    openList = [s]
+    mapShape = (width, height)
+    close_table = np.zeros(mapShape)
+    h_table = np.zeros(mapShape)
+    g_table = np.zeros(mapShape)
+
+    parent = {} 
+
+
+    
+    while(len(openList) > 0 and not close_table[t[0], t[1]]) :
+        minF = minItem(openList, lambda x : g_table[x[0] , x[1]] + h_table[x[0] , x[1]])
+        openList.remove(minF)
+        # 当前f值最小的点
+        fx, fy = minF
+        close_table[fx, fy] = 1
+
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if (abs(i) != abs(j)) :
+                    x, y = fx + i, fy + j
+
+                    if not (x >= 0 and y >= 0 and x < width and y < height):
+                        continue
+
+                    if walls[x][y] :
+                        continue
+                    
+                    if close_table[x,y] :
+                        continue
+                    
+                    if not (x, y) in openList :
+                        openList.append((x, y))
+                        g_table[x, y] = g_table[fx, fy] + 1
+                        h_table[x, y] =  manhattanDistance((x, y), t) 
+                        parent[(x, y)] = (fx, fy) 
+                    else :
+                        if g_table[x,y] > g_table[fx, fy] + 1 :
+                            parent[(x, y)] = (fx, fy) 
+                            g_table[x, y] = g_table[fx, fy] + 1
+    path = [t]
+    m = t
+    while m in parent.keys():
+        p = parent[m]
+        if p != s:
+            path.append(p)
+        m = p
+
+    path.reverse()
+    return path
+def closestFood(pos, food, walls):
+    """
+    closestFood -- this is similar to the function that we have
+    worked on in the search project; here its all in one place
+    """
+    fringe = [(pos[0], pos[1], 0)]
+    expanded = set()
+    while fringe:
+        pos_x, pos_y, dist = fringe.pop(0)
+        if (pos_x, pos_y) in expanded:
+            continue
+        expanded.add((pos_x, pos_y))
+        # if we find a food at this location then exit
+        if food[pos_x][pos_y]:
+            return dist
+        # otherwise spread out from the location to its neighbours
+        nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
+        for nbr_x, nbr_y in nbrs:
+            fringe.append((nbr_x, nbr_y, dist+1))
+    # no food found
+    return None
+def getFeatures(player, state, action) :
+    features = Counter() 
+    walls = state.layout.walls
+    food = state.layout.food
+    features['bias'] = 1.0
+    x, y = player.pos
+    dx, dy = Actions.directionToVector(action)
+    next_x, next_y = int(x + dx), int(y + dy)
+    ghosts = state.aliveGhosts()
+    features['1-step-away-capsules'] = sum((next_x, next_y) in Actions.getLegalNeighbors(c, walls) for c in state.capsules)
+
+    if not features['1-step-away-capsules'] :
+      features['1-step-away-ghosts'] = sum((next_x, next_y) in Actions.getLegalNeighbors(g.pos, walls) for g in ghosts)
+      if not features["1-step-away-ghosts"] and food[next_x][next_y]:
+        features["eats-food"] = 1.0
+    
+    dist = closestFood(player.pos, food, walls)
+    if dist is not None:
+      features["closest-food"] = float(dist) / (walls.width * walls.height)
+
+    features.divideAll(10.0)
+    return features

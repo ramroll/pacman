@@ -29,8 +29,9 @@ class Player:
         self.alive = True
         self.moves = 0
 
-    def __hash__(self) :
-        h = hash(hash(self.pos) + 13 * hash((self.isPacman, self.super)))
+    def hash(self) :
+        h = str((self.pos[0], self.pos[1], self.alive, self.isPacman, self.super))
+
         return h
 
 

@@ -1,6 +1,7 @@
 from os import system, name
 from player import Player
 from state import State
+import time
 # from graphicsUtils import *
 
 
@@ -108,7 +109,9 @@ class Game:
         self.refresh()
         state = self.state
         eps = 0
+
         if self.params['numTraining'] < rnd:
+
             self.display = Display()
             self.display.initialize(state)
         self.notifyAgentHooks('init')
@@ -116,7 +119,7 @@ class Game:
 
             alivePlayers = state.alivePlayers()
             for player in alivePlayers:
-
+                
                 if not player.alive:
                     continue
                 action = player.getAction(state)
@@ -141,7 +144,8 @@ class Game:
         self.rate = 1 - (state.food.count() /
                          state.total_food) if state.total_food > 0 else 0
         self.avg_rate = self.avg_rate * (R-1) / (R) + self.rate / R 
-        self.printResult(rnd, result, state, eps)
+        if rnd % 10 == 0 :
+            self.printResult(rnd, result, state, eps)
 
 
 class Display:
@@ -153,4 +157,4 @@ class Display:
         system('clear')
         print('round:', rnd)
         print(state)
-        sleep(0.3)
+        time.sleep(0.3)
