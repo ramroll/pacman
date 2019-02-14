@@ -19,7 +19,7 @@ class State:
     def refresh(self):
         self.food = self.layout.food.copy()
         self.pacmanScore = 0
-        self.ghostScore = 0
+        self.ghostScore = self.layout.food.count() * 10
         self.total_food = self.food.count()
 
         self.capsules = self.layout.capsules.copy()
@@ -79,24 +79,24 @@ class State:
                 player.alive = False
                 return
 
-            self.pacmanScore += TIME_PENALTY
+            # self.pacmanScore += TIME_PENALTY
             g = self.aliveGhosts()
             collision = [x for x in g if x.pos == player.pos]
             if len(collision) > 0:
                 if player.super > 0:
                     for p in collision:
                         p.alive = False
-                        self.pacmanScore += 500
-                        self.ghostScore -= 500
+                        # self.pacmanScore += 500
+                        # self.ghostScore -= 500
                 else:
                     player.alive = False
-                    self.pacmanScore -= 500
-                    self.ghostScore += 500
+                    # self.pacmanScore -= 500
+                    # self.ghostScore += 500
                 return
 
             if (x, y) in self.capsules:
                 self.capsules.remove((x, y))
-                player.super = 10
+                player.super = 5 
 
             if self.food[x][y]:
                 self.pacmanScore += 10
@@ -105,24 +105,24 @@ class State:
                 self._foodEaten = (x, y)
                 numFood -= 1
                 if(numFood == 0):
-                    self.pacmanScore += 500
-                    self.ghostScore -= 500
+                    # self.pacmanScore += 500
+                    # self.ghostScore -= 500
                     for ghost in self.aliveGhosts():
                         ghost.alive = False
         else:
             g = self.alivePacmans()
-            self.ghostScore += TIME_PENALTY
+            # self.ghostScore += TIME_PENALTY
             eaten = [x for x in g if x.pos == player.pos]
             # print(eaten)
             for pacman in eaten:
                 if pacman.super > 0:
                     player.alive = False
-                    self.pacmanScore += 500
-                    self.ghostScore -= 500
+                    # self.pacmanScore += 500
+                    # self.ghostScore -= 500
                 else:
                     pacman.alive = False
-                    self.ghostScore += 500
-                    self.pacmanScore -= 500
+                    # self.ghostScore += 500
+                    # self.pacmanScore -= 500
 
     def getPacmanPositions(self):
         alivePacmans = self.alivePacmans()
