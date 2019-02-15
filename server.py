@@ -80,18 +80,23 @@ class Resquest(BaseHTTPRequestHandler):
             args['catchExceptions'] = False
             args['timeout'] = 30
             args['agentOpts'] = agentOpts
-            game = Game(args)
-            game.notifyAgentHooks('init')
+            game = None
+            # game = Game(args)
+            # game.notifyAgentHooks('init')
             # self.game = Game(self.args)
             # game.run()
         elif 'pacDots' in jsonData:
             args['pacmanFeast'] = jsonData['pacmanFeast']
             args['layout'] = args['layout'].refreshLayout(jsonData)
+            # print(jsonData)
             # game = Game(args)
-            game.nextRound(args['layout'])
+            if not game:
+                game = Game(args)
+                game.notifyAgentHooks('init')
+            else:
+                game.nextRound(args['layout'])
             nextMove = game.hintNextMove()
-            print(nextMove)
-            print(game.state)
+            # print(game.state)
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()

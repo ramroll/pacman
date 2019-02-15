@@ -26,7 +26,7 @@ class Layout:
     A Layout manages the static information about the game board.
     """
 
-    def __init__(self, layoutText, pacmanFeast=dict()):
+    def __init__(self, layoutText, dots=dict()):
         self.width = len(layoutText[0])
         self.height = len(layoutText)
         self.walls = Grid(self.width, self.height, False)
@@ -37,11 +37,11 @@ class Layout:
         # number of ghosts
         self.numGhosts = 0
         self.numPacman = 0
-        self.processLayoutText(layoutText, pacmanFeast)
+        self.processLayoutText(layoutText, dots)
         self.layoutText = layoutText
         # number of foods
         self.totalFood = len(self.food.asList())
-        self.pacmanFeast = pacmanFeast
+        self.dots = dots
         # self.initializeVisibilityMatrix()
 
     def getNumGhosts(self):
@@ -102,9 +102,9 @@ class Layout:
         return "\n".join(self.layoutText)
 
     def deepCopy(self):
-        return Layout(self.layoutText[:], self.pacmanFeast)
+        return Layout(self.layoutText[:], self.dots)
 
-    def processLayoutText(self, layoutText, pacmanFeast=dict()):
+    def processLayoutText(self, layoutText, dots=dict()):
         """
         Coordinates are flipped from the input format to the (x,y) convention here
 
@@ -118,29 +118,28 @@ class Layout:
         Other characters are ignored.
         """
         maxY = self.height - 1
-        super = 0
-        pacmanCount = 0
         for y in range(self.height):
             for x in range(self.width):
                 layoutChar = layoutText[maxY - y][x]
-                # if layoutChar == ' ':
-                #     rnd = random.random()
-                #     if rnd < 0.90:
-                #         layoutChar = '2'
-                #     else:
-                #         layoutChar = '3'
-                if str(layoutChar) == '4':
-                    if str(pacmanCount) in pacmanFeast:
-                        if pacmanFeast[str(pacmanCount)] == True:
-                            super = 1
-                    pacmanCount += 1
-                self.processLayoutChar(x, y, layoutChar, super)
+                self.processLayoutChar(x, y, layoutChar)
+        # push pacman
+        if 'pacmanFeast' in dots:
+            pacmanFeast = dots['pacmanFeast']
+            agentPositions = []
+            for name, value in dots['pacman'].items():
+                x = value['x']
+                y = value['y']
                 super = 0
-        # self.agentPositions.sort()
-        self.agentPositions = [(i == 0, pos, super)
-                               for i, pos, super in self.agentPositions]
+                if pacmanFeast[name]:
+                    super = 1
+                agentPositions.append((True, (y, 20 - x), name, super))
+            for name, value in dots['ghosts'].items():
+                x = value['x']
+                y = value['y']
+                agentPositions.append((False, (y, 20 - x), name, 0))
+            self.agentPositions = agentPositions
 
-    def processLayoutChar(self, x, y, layoutChar, super=0):
+    def processLayoutChar(self, x, y, layoutChar):
         layoutChar = str(layoutChar)
         # wall
         if layoutChar == '1':
@@ -152,16 +151,16 @@ class Layout:
         elif layoutChar == '3':
             self.capsules.append((x, y))
         # pacman
-        elif layoutChar == '4':
-            self.agentPositions.append((0, (x, y), super))
-            self.numPacman += 1
+        # elif layoutChar == '4':
+        #     self.agentPositions.append((0, (x, y), super))
+        #     self.numPacman += 1
         # ghost
-        elif layoutChar in ['5']:
-            self.agentPositions.append((1, (x, y), super))
-            self.numGhosts += 1
-        elif layoutChar in ['1', '2', '3', '4']:
-            self.agentPositions.append((int(layoutChar), (x, y)))
-            self.numGhosts += 1
+        # elif layoutChar in ['5']:
+        #     self.agentPositions.append((1, (x, y), 0))
+        #     self.numGhosts += 1
+        # elif layoutChar in ['1', '2', '3', '4']:
+        #     self.agentPositions.append((int(layoutChar), (x, y)))
+        #     self.numGhosts += 1
 
     def refreshLayout(self, dots):
         layoutText = self.layoutText.copy()
@@ -185,7 +184,25 @@ class Layout:
             layoutText[value['x']][value['y']] = 4
         for value in ghosts.values():
             layoutText[value['x']][value['y']] = 5
-        return Layout(layoutText, pacmanFeast)
+
+        def c(x):
+            if x == 1:
+                return '%'
+            if x == 0:
+                return ' '
+            if x == 4:
+                return 'P'
+            if x == 5:
+                return 'G'
+            if x == 2:
+                return '.'
+            if x == 3:
+                return 'o'
+            return str(x)
+        # print('pacman: ', pacman)
+        print('\n'.join([''.join([c(x) for x in row])
+                         for row in layoutText]))
+        return Layout(layoutText, dots)
 
 
 def getLayout(name, back=2):
