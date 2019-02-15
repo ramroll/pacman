@@ -149,7 +149,7 @@ def readCommand(argv):
     agentOpts['width'] = layout.getLayout(options.layout).width
     agentOpts['height'] = layout.getLayout(options.layout).height
 
-    if options.numTraining > 0:
+    if options.numTraining >= 0:
         args['numTraining'] = options.numTraining
         if 'numTraining' not in agentOpts:
             agentOpts['numTraining'] = options.numTraining

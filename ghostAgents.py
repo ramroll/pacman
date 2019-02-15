@@ -62,7 +62,19 @@ class RandomGhost(GhostAgent):
 
 
 class AstarGhost(GhostAgent) :
+    def getRandom(self, state):
+        dist = util.Counter()
 
+        dir = self.player.dir
+        reverse = Actions.reverseDirection(dir)
+
+        legalActions=[ 
+            x for x in Actions.getPossibleActions(self.player.pos, state.layout.walls)
+            if x != reverse and x != Directions.STOP
+        ]
+        if len(legalActions) == 0:
+            return Directions.STOP
+        return random.choice(legalActions)
 
     def getAction(self, state) :
 
@@ -86,7 +98,11 @@ class AstarGhost(GhostAgent) :
         
         rnd=True
 
+
+
         if len(nearestPath) > 0 :
+            if len(nearestPath) > 3:
+                return self.getRandom(state)
             tx, ty = nearestPath[0]
             sx, sy = self.player.pos 
             action = Actions.vectorToDirection((tx - sx, ty - sy) )

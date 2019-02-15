@@ -26,7 +26,7 @@ params = {
 
     # Epsilon value (epsilon-greedy)
     'eps': 1.0,             # Epsilon start value
-    'eps_final': 0.1,       # Epsilon end value
+    'eps_final': 0.2,       # Epsilon end value
     'eps_step': 10000       # Epsilon steps between start and end (linear)
 }
 
@@ -133,35 +133,136 @@ class FastDQNAgent1:
         QValue = QValueTemp
     return action
   
+  
+  def hash_dir(self, v) :
+    x,y = v
+    if x == 1 and y == 0 :
+      return 0
+    elif x == -1 and y == 0:
+      return 1
+    elif x == 0 and y == 1:
+      return 2
+    else:
+      return 3
+
+  def ghost_desc(self, pos, walls, aliveGhosts):
+    fringe = [(pos[0], pos[1], 0)]
+    expanded = set()
+    parent = {}
+
+    gset = set()
+
+    for ghost in aliveGhosts:
+      gset.add(ghost.pos)
+
+    ghosts = []
+    while fringe:
+        pos_x, pos_y, dist = fringe.pop(0)
+        if (pos_x, pos_y) in expanded:
+          continue
+        if dist > 5 :
+          continue
+          
+        expanded.add((pos_x, pos_y))
+
+        if (pos_x, pos_y) in gset:
+          ghosts.append((pos_x, pos_y, dist))
+
+        nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
+        for nbr_x, nbr_y in nbrs:
+          if (nbr_x, nbr_y) not in expanded:
+            parent[(nbr_x, nbr_y)] = (pos_x, pos_y)
+          fringe.append((nbr_x, nbr_y, dist+1))
+
+    h_list = [0,0,0,0]
+    for ghost in ghosts:
+      gx,gy,dist = ghost
+      if (gx,gy) == pos:
+        continue
+
+      path = []
+      p = (gx, gy)
+      while p in parent:
+        path.append(p)
+        p = parent[p]
+      path.reverse()
+      x = path[0] 
+      v = (x[0] - pos[0], x[1] - pos[1]) 
+      h_list[self.hash_dir(v)] = dist 
+    
+    base = 1
+    h = 0
+    for i in h_list:
+      if i:
+        h += i * base
+      base *= 10
+    return h
+      
+    
+      
+ 
+  def food_desc(self,pos,walls,foods,ghosts) :
+    fringe = [(pos[0], pos[1], 0)]
+    expanded = set()
+    parent = {}
+
+    gset = [g.pos for g in ghosts]
+    food_pos = None
+    m = 0
+    while fringe:
+        pos_x, pos_y, dist = fringe.pop(0)
+        if (pos_x, pos_y) in expanded:
+          continue
+
+        expanded.add((pos_x, pos_y))
+
+        if foods[pos_x][pos_y] > 0 :
+          food_pos = (pos_x, pos_y)
+          m = dist
+          break
+
+        # otherwise spread out from the location to its neighbours
+        nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
+        for nbr_x, nbr_y in nbrs:
+
+          for (gx, gy) in gset:
+            if util.manhattanDistance((gx, gy), pos) < dist + 1 : 
+              continue
+          if (nbr_x, nbr_y) in gset:
+            continue
+          if (nbr_x, nbr_y) not in expanded :
+            parent[(nbr_x, nbr_y)] = (pos_x, pos_y)
+          fringe.append((nbr_x, nbr_y, dist+1))
+
+    if food_pos and food_pos != pos:
+
+      path = []
+      p = food_pos
+      while p in parent:
+        path.append(p)
+        p = parent[p]
+      path.reverse()
+      x = path[0]
+      v = (x[0] - pos[0], x[1] - pos[1])
+
+      h = dist * 100 + self.hash_dir(v)
+      return h
+    return 0
+
   def hash_state(self, state, pos, action, s) :
 
-    h_walls = util.wall_desc(pos, state.layout.walls)
-
-
+    print(state)
+    
+    # h_walls = util.wall_desc(pos, state.layout.walls)
     aliveGhosts = state.aliveGhosts()
-    closest2Food = util.closestNFood(pos, state.layout.food, state.layout.walls, 1, aliveGhosts)
-    closest2Ghost = util.closest2Ghost(pos, aliveGhosts)
+
+    h_food = self.food_desc(pos, state.layout.walls, state.food, aliveGhosts)
+    h_ghosts = self.ghost_desc(pos, state.layout.walls, aliveGhosts)
+
 
     closestCapsule = None
     if len(state.capsules) :
       closestCapsule = min(state.capsules, key = lambda c : util.manhattanDistance(c, pos))
-
-
-    h_capsule = 0
-    h_ghosts = 0
-    h_food = 0
-    h_super = 1 if s > 0 else 0
-    if closestCapsule :
-      h_capsule = desc(pos, closestCapsule) 
-    if len(closest2Ghost) == 1:
-      h_ghosts = desc( pos, closest2Ghost[0] )
-    if len(closest2Ghost) == 2:
-      h_ghosts = desc(pos, closest2Ghost[0]) + desc(pos, closest2Ghost[1]) * 31
-
-    if len(closest2Food) == 1:
-      h_food = desc(pos, closest2Food[0])
-    if len(closest2Food) == 2:
-      h_food = desc(pos, closest2Food[0]) +desc(pos, closest2Food[1]) * 31
 
     h_action = 0
     if action == 'North':
@@ -173,7 +274,8 @@ class FastDQNAgent1:
     elif action == 'West' :
       h_action = 4
     
-    return h_walls * 1e12 + h_ghosts * 1e9 + h_food * 1e6 + h_super * 1e3 + h_action
+    h_super = 1 if s > 0 else 0
+    return h_ghosts * 1e9 + h_food * 1e3 + h_super * 1e1 + h_action
 
 
   def getQValue(self, state, pos, action, superVal) :
@@ -187,44 +289,39 @@ class FastDQNAgent1:
     # foods = [p for p in neighbors if state.food[p[0]][p[1]]]
 
     legalActions = [a for a in self.getLegalActions(state, self.player.pos)]
+    # random.choice(legalActions)
+    action = random.choice(legalActions) 
+    # if len(foods) > 0 :
+    #   p = random.choice(foods)
+    #   action = Actions.vectorToDirection((p[0] - self.player.pos[0], p[1] - self.player.pos[1]))
 
     action = self.computeActionFromQValues(state) 
-    if not action in legalActions:
-      return random.choice(legalActions)
     return action
     
 
-  def init(self,state):
-    self.frame = 0
-    self.numeps += 1
-    self.last_state = state.copy()
-    self.last_pos = self.player.pos
-    self.won = True
 
+  
 
-  def save(self) :
-    if self.params['save_file'] :
-      with open(self.params['save_file'], 'w+') as f : 
-        f.write(repr({
-          "qtable" : self.QValues,
-          "eps" : self.eps,
-          "cnt" : self.cnt,
-          'numeps' : self.numeps
-        }))
 
 
   def load(self) :
 
     if self.params['load_file'] :
-      with open(self.params['load_file']) as f:
-        s = f.read()
+      try:
+        with open(self.params['load_file']) as f:
+          s = f.read()
 
-        obj = ast.literal_eval(s)
+          obj = ast.literal_eval(s)
 
-        self.QValues = obj['qtable']
-        self.eps = obj['eps']
-        self.cnt = obj['cnt']
-        self.numeps = obj['numeps']
+          self.QValues = obj['qtable']
+          self.eps = .5
+          self.cnt = obj['cnt'] 
+          self.numeps = 0
+          self.total_rew = 0
+          print('loaded')
+      except :
+        return
+        
 
 
   

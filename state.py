@@ -90,8 +90,9 @@ class State:
                         # self.ghostScore -= 500
                 else:
                     player.alive = False
+                    self.pacmanScore -= 50
                     # self.pacmanScore -= 500
-                    self.ghostScore += 50
+                    # self.ghostScore += 50
                 return
 
             if (x, y) in self.capsules:
@@ -106,7 +107,7 @@ class State:
                 self._foodEaten = (x, y)
                 numFood -= 1
                 if(numFood == 0):
-                    self.pacmanScore += 50
+                    # self.pacmanScore += 50
                     # self.ghostScore -= 500
                     for ghost in self.aliveGhosts():
                         ghost.alive = False
@@ -122,8 +123,8 @@ class State:
                     # self.ghostScore -= 500
                 else:
                     pacman.alive = False
-                    self.ghostScore += 50
-                    # self.pacmanScore -= 500
+                    # self.ghostScore += 50
+                    self.pacmanScore -= 50
 
     def getPacmanPositions(self):
         alivePacmans = self.alivePacmans()
@@ -156,7 +157,10 @@ class State:
         for player in self.players:
             x, y = player.pos
             if player.isPacman:
-                map[x][y] = self._pacStr()
+                if player.super :
+                    map[x][y] = 'S'
+                else:
+                    map[x][y] = 'P'
             else:
                 map[x][y] = self._ghostStr()
 

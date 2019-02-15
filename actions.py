@@ -46,6 +46,8 @@ class Actions:
     directionToVector = staticmethod(directionToVector)
 
     def checkLegal( pos, action, walls) :
+        if action == Directions.STOP :
+            return
         legal = Actions.getPossibleActions(pos, walls)
         if action not in legal:
             raise Exception("Illegal action " + str(action))
@@ -71,6 +73,8 @@ class Actions:
         x_int, y_int = int(x + 0.5), int(y + 0.5)
         neighbors = []
         for dir, vec in Actions._directionsAsList:
+            if  dir == Directions.STOP : 
+                continue
             dx, dy = vec
             next_x = x_int + dx
             if next_x < 0 or next_x == walls.width:
