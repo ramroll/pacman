@@ -181,7 +181,7 @@ class Game:
                          state.total_food) if state.total_food > 0 else 0
         self.avg_rate = self.avg_rate * (R-1) / (R) + self.rate / R
         # if rnd % 10 == 0:
-        self.printResult(rnd, result, state, eps)
+        #     self.printResult(rnd, result, state, eps)
 
 
 class Display:

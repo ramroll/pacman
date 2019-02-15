@@ -764,6 +764,65 @@ def astar(s, t, walls, width, height) :
 
     path.reverse()
     return path
+
+def closestNFood(pos, food, walls, n, ghosts):
+    """
+    closestFood -- this is similar to the function that we have
+    worked on in the search project; here its all in one place
+    """
+    fringe = [(pos[0], pos[1])]
+    expanded = set()
+    gset = set()
+    for g in ghosts :
+        nbrs = Actions.getLegalNeighbors(g.pos, walls)
+        for p in nbrs:
+            gset.add(p)
+
+    nfoods = []
+    while fringe and len(nfoods)     < n:
+        pos_x, pos_y = fringe.pop(0)
+        if (pos_x, pos_y) in expanded:
+            continue
+        expanded.add((pos_x, pos_y))
+        # if we find a food at this location then exit
+        if food[pos_x][pos_y] and not (pos_x, pos_y) in gset:
+            nfoods.append((pos_x, pos_y))
+            continue
+        # otherwise spread out from the location to its neighbours
+        nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
+        for nbr_x, nbr_y in nbrs:
+            fringe.append((nbr_x, nbr_y))
+    return nfoods
+
+def wall_desc(pos, walls):
+    fringe = [(pos[0], pos[1], 0)]
+    expanded = set()
+    l_set = set()
+    while fringe:
+        pos_x, pos_y, dist = fringe.pop(0)
+        if dist > 2 :
+            continue
+        if (pos_x, pos_y) in expanded:
+  
+            continue
+        l_set.add((pos_x, pos_y))
+        expanded.add((pos_x, pos_y))
+
+        nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
+        for nbr_x, nbr_y in nbrs:
+            fringe.append((nbr_x, nbr_y, dist+1))
+    
+    vs = [(-1,0),(-2,0), (1,0), (2,0), (0,-1), (0,-2), (0,1),(0,2),(-1,1),(1,-1),(1,1),(-1,-1)]
+
+    h = 0
+    base = 1
+    for v in vs:
+        px, py = v[0] + pos[0], v[1] + pos[1]
+        if (px, py) in l_set:
+            h += base
+        base*=2
+    return h
+
 def closestFood(pos, food, walls):
     """
     closestFood -- this is similar to the function that we have
@@ -785,6 +844,17 @@ def closestFood(pos, food, walls):
             fringe.append((nbr_x, nbr_y, dist+1))
     # no food found
     return None
+
+def closest2Ghost(pos, ghosts):
+
+    if len(ghosts) <= 2:
+        return [g.pos for g in ghosts ]
+    n1 = min(ghosts, key=lambda g:manhattanDistance(g.pos, pos))
+    l = ghosts.copy()
+    l.remove(n1)
+    n2 = min(l, key=lambda g:manhattanDistance(g.pos, pos))
+    return [n1.pos, n2.pos]
+
 def getFeatures(player, state, action) :
     features = Counter() 
     walls = state.layout.walls

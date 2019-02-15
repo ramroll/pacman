@@ -31,6 +31,49 @@ params = {
 }
 
 
+def normalize(v):
+  if v > 0 : 
+    return 1
+  elif v < 0 :
+    return -1 
+  return 0
+
+
+def hash_d(d):
+  if d == (-1,-1) :
+    return 1
+  elif d == (0, -1):
+    return 2
+  elif d == (1, -1) :
+    return 3
+  elif d == (1, 0) :
+    return 4
+  elif d == (1, 1) :
+    return 5
+  elif d == (0, 1) :
+    return 6
+  elif d == (-1, 1):
+    return 7
+  elif d == (-1, 0):
+    return 8
+  else:
+    return 0
+def desc(p0, p1) :
+  dist = util.manhattanDistance(p0, p1)
+  v = 0
+  if dist < 2 :
+    v = 1
+  elif dist < 4 :
+    v = 2
+  else:
+    v = 3
+
+
+  vx, vy = (p1[0] - p0[0] , p1[1] - p0[1])
+  d = (normalize(vx), normalize(vy))
+
+  return hash_d(d) * v
+ 
 class FastDQNAgent:
 
   def __init__(self, player, args) :
@@ -53,15 +96,17 @@ class FastDQNAgent:
     self.last_pos = self.player.pos
     self.QValues = {}
     self.state_hash = {}
+    
 
+    self.total_rew = 0
     self.exps = deque()
     # self.player_hash = {}
-    # self.load()
+    self.load()
   
   def getLegalActions(self, state, pos) :
     return Actions.getPossibleActions(pos, state.layout.walls)
 
-  def computeValueFromQValues(self, state, pos):
+  def computeValueFromQValues(self, state, pos, superVal):
       """
         Returns max_action Q(state,action)
         where the max is over legal actions.  Note that if
@@ -69,7 +114,7 @@ class FastDQNAgent:
         terminal state, you should return a value of 0.0.
       """
       "*** YOUR CODE HERE ***"
-      qvalues = [self.getQValue(state, pos, action) for action in self.getLegalActions(state, pos)]
+      qvalues = [self.getQValue(state, pos, action, superVal) for action in self.getLegalActions(state, pos)]
       if not len(qvalues): return 0.0
       return max(qvalues)
 
@@ -82,56 +127,58 @@ class FastDQNAgent:
     QValue = -1e10
 
     for legalAction in legalActions:
-      QValueTemp = self.getQValue(state, self.player.pos, legalAction)
+      QValueTemp = self.getQValue(state, self.player.pos, legalAction, self.player.super)
       if QValueTemp > QValue:
         action = legalAction
         QValue = QValueTemp
     return action
   
-  def hash_state(self, state, pos, action) :
+  def hash_state(self, state, pos, action, s) :
 
-    # 7*7 = 49 
-    # 0-1-2-3-4
-    def hash_array(arr) :
-      base = 1
-      h = 0
-      for row in arr:
-        for l in row:
-          if l:
-            h += base
-          base *= 2
-      return h
+    h_walls = util.wall_desc(pos, state.layout.walls)
 
 
-    SIGHT = 7
+    aliveGhosts = state.aliveGhosts()
+    closest2Food = util.closestNFood(pos, state.layout.food, state.layout.walls, 1, aliveGhosts)
+    closest2Ghost = util.closest2Ghost(pos, aliveGhosts)
 
-    walls = np.zeros((SIGHT, SIGHT))
-    foods = np.zeros((SIGHT, SIGHT))
-    capsules = np.zeros((SIGHT,SIGHT))
-    px, py = pos
+    closestCapsule = None
+    if len(state.capsules) :
+      closestCapsule = min(state.capsules, key = lambda c : util.manhattanDistance(c, pos))
+
+
+    h_capsule = 0
+    h_ghosts = 0
+    h_food = 0
+    h_super = 1 if s > 0 else 0
+    if closestCapsule :
+      h_capsule = desc(pos, closestCapsule) 
+    if len(closest2Ghost) == 1:
+      h_ghosts = desc( pos, closest2Ghost[0] )
+    if len(closest2Ghost) == 2:
+      h_ghosts = desc(pos, closest2Ghost[0]) + desc(pos, closest2Ghost[1]) * 31
+
+    if len(closest2Food) == 1:
+      h_food = desc(pos, closest2Food[0])
+    if len(closest2Food) == 2:
+      h_food = desc(pos, closest2Food[0]) +desc(pos, closest2Food[1]) * 31
+
+    h_action = 0
+    if action == 'North':
+      h_action = 1
+    elif action == 'South':
+      h_action = 2
+    elif action == 'East':
+      h_action = 3
+    elif action == 'West' :
+      h_action = 4
     
-    for x in range(SIGHT) :
-      for y in range(SIGHT) :
-        oo = SIGHT // 2
-        sx, sy = x + (px - oo), y + (py - oo)
-        if sx >= 0 and sy >= 0 and sx < state.layout.width and sy < state.layout.height  :
-          if state.layout.walls[sx][-1-sy] :
-            walls[y][x] = 1
-          if state.layout.food[sx][sy]  :
-            foods[x][y] = 1
-          if (sx, sy) in state.capsules:
-            capsules[x][y] = 1
-          
-    h_walls = hash_array(walls) % 47269
-    h_foods = hash_array(foods) % 30841
-    h_capsule = hash_array(capsules) % 3323
-    h_players = hash(tuple([p for p in state.players if p.alive and p.isPacman == False]))
-    s_hash = h_walls * 7 + h_foods * 13 + h_capsule * 19 + h_players * 31
-    return str(s_hash) + '-' + action
+    return h_walls * 1e12 + h_ghosts * 1e9 + h_food * 1e6 + h_super * 1e3 + h_action
 
-  def getQValue(self, state, pos, action) :
+
+  def getQValue(self, state, pos, action, superVal) :
     # h = state.hash(action)
-    h = self.hash_state(state, pos, action)
+    h = self.hash_state(state, pos, action, superVal)
     # print(h)
     return 0.0 if h not in self.QValues else self.QValues[h]
 
@@ -155,16 +202,16 @@ class FastDQNAgent:
 
     smp = random.sample(self.exps, 64)
           
-    for (state, newState, pos, newPos, reward) in smp:
+    for (state, newState, pos, newPos, reward, superVal) in smp:
       action = Actions.vectorToDirection((newPos[0] - pos[0], newPos[1] - pos[1])) 
 
-      curQValue = self.getQValue(state, pos, action)
+      curQValue = self.getQValue(state, pos, action, superVal)
       # print('\n-------')
       # print(state)
       # print('->', action)
       # print(newState)
 
-      nextQValue = (1-self.alpha) * curQValue + self.alpha * (reward + self.params['discount'] * self.computeValueFromQValues(newState, newPos) )
+      nextQValue = (1-self.alpha) * curQValue + self.alpha * (reward + self.params['discount'] * self.computeValueFromQValues(newState, newPos, superVal) )
       # print('lscore=%2d,nscore=%2d,reward=%2d,curQ=%.2f, nxtQ=%.2f' % 
       #     (state.pacmanScore, newState.pacmanScore,newState.pacmanScore - state.pacmanScore, curQValue, nextQValue))
       # print(action, curQValue, nextQValue, newState.pacmanScore - state.pacmanScore)
@@ -173,7 +220,7 @@ class FastDQNAgent:
       #   print('lscore=%2d,nscore=%2d,reward=%2d,curQ=%.2f, nxtQ=%.2f' % 
       #     (state.pacmanScore, newState.pacmanScore,newState.pacmanScore - state.pacmanScore, curQValue, nextQValue))
       #   raise 'hhh'
-      self.QValues[self.hash_state(state, pos, action)] = nextQValue
+      self.QValues[self.hash_state(state, pos, action,superVal)] = nextQValue
       # self.state_hash[state.hash(action)] = 1
       self.eps = max(self.params['eps_final'], 1.00 - float(self.cnt) / float(self.params['eps_step']))
         
@@ -193,7 +240,7 @@ class FastDQNAgent:
       self.last_score = self.current_score
       self.last_reward = reward
       self.ep_rew += self.last_reward
-      self.exps.append((state, newState.copy(), self.last_pos, pos, reward))
+      self.exps.append((state, newState.copy(), self.last_pos, pos, reward, self.player.super))
       if len(self.exps) > 10000:
         self.exps.popleft()
 
@@ -225,16 +272,16 @@ class FastDQNAgent:
     #                 (self.numeps, self.local_cnt, self.cnt, time.time()-self.s, self.ep_rew, self.params['eps']))
     # log_file.write("| Q: %10f | won: %r \n" %
     #                 ((max(self.Q_global, default=float('nan')), self.won)))
-    sys.stdout.write("# %4d | steps: %5d | t: %4f | r: %12f | e: %10f | won: %s\n" %
-                      (self.numeps, self.local_cnt, time.time()-self.s, self.ep_rew, self.eps, self.won))
-    # sys.stdout.write("| Q: %10f | won: %r \n" %
-    # print(self.QValues)
-    # print(self.state_hash)
+    self.total_rew += self.ep_rew
+    
+    if self.cnt % 40 == 0 :
+      sys.stdout.write("# %4d | steps: %5d | hsize: %4d | avgr: %6.2f | r : %4d | e: %10f | won: %s\n" %
+                        (self.numeps, self.local_cnt, len(self.QValues), self.total_rew / self.cnt,  self.ep_rew,  self.eps, self.won))
 
-    print(' %4d %4d' % (len(self.QValues), len(self.state_hash)))
-    sys.stdout.flush()
+      # print(' %4d %4d' % (len(self.QValues), len(self.state_hash)))
+      sys.stdout.flush()
 
-    if self.cnt > 0 and  self.cnt % 5000 == 0:  
+    if self.cnt > 0 and  self.cnt % 500 == 0:  
       print('save')
       self.save()
   
@@ -259,9 +306,12 @@ class FastDQNAgent:
         obj = ast.literal_eval(s)
 
         self.QValues = obj['qtable']
-        self.eps = obj['eps']
-        self.cnt = obj['cnt']
-        self.numeps = obj['numeps']
+        self.eps = .5
+        self.cnt = 0
+        self.numeps = 0
+        self.total_rew = 0
+        print('loaded')
+        
 
 
   

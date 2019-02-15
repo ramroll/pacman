@@ -10,7 +10,7 @@ import ast
 from collections import deque
 params = {
     # Model backups
-    'load_file': 'saves/qtable1',
+    'load_file': 'saves/qtable',
     'save_file': 'saves/qtable',
     'save_interval': 20000,
 
@@ -31,6 +31,49 @@ params = {
 }
 
 
+def normalize(v):
+  if v > 0 : 
+    return 1
+  elif v < 0 :
+    return -1 
+  return 0
+
+
+def hash_d(d):
+  if d == (-1,-1) :
+    return 1
+  elif d == (0, -1):
+    return 2
+  elif d == (1, -1) :
+    return 3
+  elif d == (1, 0) :
+    return 4
+  elif d == (1, 1) :
+    return 5
+  elif d == (0, 1) :
+    return 6
+  elif d == (-1, 1):
+    return 7
+  elif d == (-1, 0):
+    return 8
+  else:
+    return 0
+def desc(p0, p1) :
+  dist = util.manhattanDistance(p0, p1)
+  v = 0
+  if dist < 2 :
+    v = 1
+  elif dist < 4 :
+    v = 2
+  else:
+    v = 3
+
+
+  vx, vy = (p1[0] - p0[0] , p1[1] - p0[1])
+  d = (normalize(vx), normalize(vy))
+
+  return hash_d(d) * v
+ 
 class FastDQNAgent1:
 
   def __init__(self, player, args) :
@@ -53,16 +96,17 @@ class FastDQNAgent1:
     self.last_pos = self.player.pos
     self.QValues = {}
     self.state_hash = {}
+    
 
+    self.total_rew = 0
     self.exps = deque()
-    self.load()
     # self.player_hash = {}
-    # self.load()
+    self.load()
   
   def getLegalActions(self, state, pos) :
     return Actions.getPossibleActions(pos, state.layout.walls)
 
-  def computeValueFromQValues(self, state, pos):
+  def computeValueFromQValues(self, state, pos, superVal):
       """
         Returns max_action Q(state,action)
         where the max is over legal actions.  Note that if
@@ -70,7 +114,7 @@ class FastDQNAgent1:
         terminal state, you should return a value of 0.0.
       """
       "*** YOUR CODE HERE ***"
-      qvalues = [self.getQValue(state, action) for action in self.getLegalActions(state, pos)]
+      qvalues = [self.getQValue(state, pos, action, superVal) for action in self.getLegalActions(state, pos)]
       if not len(qvalues): return 0.0
       return max(qvalues)
 
@@ -83,23 +127,79 @@ class FastDQNAgent1:
     QValue = -1e10
 
     for legalAction in legalActions:
-      QValueTemp = self.getQValue(state, legalAction)
+      QValueTemp = self.getQValue(state, self.player.pos, legalAction, self.player.super)
       if QValueTemp > QValue:
         action = legalAction
         QValue = QValueTemp
     return action
+  
+  def hash_state(self, state, pos, action, s) :
 
-  def getQValue(self, state, action) :
-    h = state.hash1(action, self.player)
+    h_walls = util.wall_desc(pos, state.layout.walls)
+
+
+    aliveGhosts = state.aliveGhosts()
+    closest2Food = util.closestNFood(pos, state.layout.food, state.layout.walls, 1, aliveGhosts)
+    closest2Ghost = util.closest2Ghost(pos, aliveGhosts)
+
+    closestCapsule = None
+    if len(state.capsules) :
+      closestCapsule = min(state.capsules, key = lambda c : util.manhattanDistance(c, pos))
+
+
+    h_capsule = 0
+    h_ghosts = 0
+    h_food = 0
+    h_super = 1 if s > 0 else 0
+    if closestCapsule :
+      h_capsule = desc(pos, closestCapsule) 
+    if len(closest2Ghost) == 1:
+      h_ghosts = desc( pos, closest2Ghost[0] )
+    if len(closest2Ghost) == 2:
+      h_ghosts = desc(pos, closest2Ghost[0]) + desc(pos, closest2Ghost[1]) * 31
+
+    if len(closest2Food) == 1:
+      h_food = desc(pos, closest2Food[0])
+    if len(closest2Food) == 2:
+      h_food = desc(pos, closest2Food[0]) +desc(pos, closest2Food[1]) * 31
+
+    h_action = 0
+    if action == 'North':
+      h_action = 1
+    elif action == 'South':
+      h_action = 2
+    elif action == 'East':
+      h_action = 3
+    elif action == 'West' :
+      h_action = 4
+    
+    return h_walls * 1e12 + h_ghosts * 1e9 + h_food * 1e6 + h_super * 1e3 + h_action
+
+
+  def getQValue(self, state, pos, action, superVal) :
+    # h = state.hash(action)
+    h = self.hash_state(state, pos, action, superVal)
     # print(h)
     return 0.0 if h not in self.QValues else self.QValues[h]
 
   def getAction(self, state) :
+    # neighbors = Actions.getLegalNeighbors(self.player.pos, state.layout.walls)
+    # foods = [p for p in neighbors if state.food[p[0]][p[1]]]
+
     legalActions = [a for a in self.getLegalActions(state, self.player.pos)]
+
     action = self.computeActionFromQValues(state) 
+    if not action in legalActions:
+      return random.choice(legalActions)
     return action
     
 
+  def init(self,state):
+    self.frame = 0
+    self.numeps += 1
+    self.last_state = state.copy()
+    self.last_pos = self.player.pos
+    self.won = True
 
 
   def save(self) :
@@ -125,7 +225,6 @@ class FastDQNAgent1:
         self.eps = obj['eps']
         self.cnt = obj['cnt']
         self.numeps = obj['numeps']
-
 
 
   

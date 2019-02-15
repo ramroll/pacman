@@ -30,7 +30,7 @@ class State:
         state.ghostScore = self.ghostScore
         state.food = self.food.copy()
         state.capsules = self.capsules.copy()
-
+  
         state.players = []
         for player in self.players:
             state.players.append(player.copy())
@@ -86,16 +86,17 @@ class State:
                 if player.super > 0:
                     for p in collision:
                         p.alive = False
-                        # self.pacmanScore += 500
+                        self.pacmanScore += 50
                         # self.ghostScore -= 500
                 else:
                     player.alive = False
                     # self.pacmanScore -= 500
-                    # self.ghostScore += 500
+                    self.ghostScore += 50
                 return
 
             if (x, y) in self.capsules:
                 self.capsules.remove((x, y))
+                self.pacmanScore += 5
                 player.super = 5 
 
             if self.food[x][y]:
@@ -105,7 +106,7 @@ class State:
                 self._foodEaten = (x, y)
                 numFood -= 1
                 if(numFood == 0):
-                    # self.pacmanScore += 500
+                    self.pacmanScore += 50
                     # self.ghostScore -= 500
                     for ghost in self.aliveGhosts():
                         ghost.alive = False
@@ -117,11 +118,11 @@ class State:
             for pacman in eaten:
                 if pacman.super > 0:
                     player.alive = False
-                    # self.pacmanScore += 500
+                    self.pacmanScore += 50
                     # self.ghostScore -= 500
                 else:
                     pacman.alive = False
-                    # self.ghostScore += 500
+                    self.ghostScore += 50
                     # self.pacmanScore -= 500
 
     def getPacmanPositions(self):
