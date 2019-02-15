@@ -8,6 +8,7 @@ import numpy as np
 import sys
 import ast
 from collections import deque
+from util import astar
 params = {
     # Model backups
     'load_file': 'saves/qtable',
@@ -102,7 +103,41 @@ class FinalAgent:
     self.wonr = 0.0
     # self.player_hash = {}
     self.load()
-  
+
+  def updateRnd(self, rnd) :
+    self.ipath = None
+    self.t = None
+    if self.player.pos == (6, 5):
+        self.t = (1, 11)
+    elif self.player.pos == (10, 5) :
+        self.t = (1, 1)
+    elif self.player.pos == (14, 13) :
+        self.t = (25, 17)
+    elif self.player.pos == (17, 13) :
+        self.t = (25, 5)
+    self.ipath = []
+
+    self.rnd = rnd
+    if self.t:
+        self.ipath = astar(self.player.pos, self.t, state.layout.walls, state.layout.width, state.layout.height)
+
+  def init(self, state) :
+        self.ipath = None
+        self.t = None
+
+        if self.player.pos == (6, 5):
+            self.t = (1, 11)
+        elif self.player.pos == (10, 5) :
+            self.t = (1, 1)
+        elif self.player.pos == (14, 13) :
+            self.t = (25, 17)
+        elif self.player.pos == (17, 13) :
+            self.t = (20, 10)
+        self.ipath = []
+
+        if self.t:
+            self.ipath = astar(self.player.pos, self.t, state.layout.walls, state.layout.width, state.layout.height)
+
   def getLegalActions(self, state, pos) :
     return Actions.getPossibleActions(pos, state.layout.walls)
 
@@ -285,13 +320,20 @@ class FinalAgent:
 
   def getAction(self, state) :
 
-    legalActions = [a for a in self.getLegalActions(state, self.player.pos)]
+    if len(self.ipath) > 0 :
+        t = self.ipath[0]
 
-    action = self.computeActionFromQValues(state) 
-    if not action:
-        action = random.choice(legalActions) 
-    return action
-    
+        self.ipath.remove(self.ipath[0])
+
+        action = Actions.vectorToDirection((t[0] - self.player.pos[0], t[1] - self.player.pos[1]))
+
+        return action
+    else :
+
+        return self.computeActionFromQValues(state)
+        
+    return Directions.STOP
+
   def load(self) :
 
     if self.params['load_file'] :
