@@ -3,6 +3,7 @@ from player import Player
 from state import State
 import time
 import util
+import random
 # from graphicsUtils import *
 
 
@@ -20,6 +21,14 @@ class Game:
         # 平均比例
         self.avg_rate = 0
 
+        layout = params['layout']
+        self.walkable = []
+        for x in range(layout.width) :
+            for y in range(layout.height) :
+                if layout.walls[x][y] == 0:
+                    self.walkable.append((x, y))
+
+    
     def nextRound(self, layout):
         newState = State(layout)
 
@@ -33,22 +42,7 @@ class Game:
         self.players = players
         self.state.players = players
 
-        # # 更新Ghost状态
-        # for player in self.players:
-        #     if not player.isPacman and player.alive:
-        #         pos = player.pos
-        #         minDist = 2
-        #         g_pos = None
-        #         for (x, y) in ghost_pos:
-        #             dist = int(util.manhattanDistance((x, y), pos))
-        #             if dist < minDist:
-        #                 minDist = dist
-        #                 g_pos = (x, y)
-        #         if minDist == 0 or minDist == 1:
-        #             ghost_pos.remove(g_pos)
-        #             player.pos = g_pos
-        #         else:
-        #             player.alive = False
+
 
     def createPlayers(self):
         players = []
@@ -60,7 +54,6 @@ class Game:
         i = 0
         for isPacman, pos, super in self.state.layout.agentPositions:
             player = Player(isPacman, (int(pos[0]), int(pos[1])), i, super)
-            print('2222')
             i += 1
             player.setAgent(
                 self.pacmanType if isPacman else self.ghostType, self.state, agentParams)
@@ -87,8 +80,12 @@ class Game:
 
     def refresh(self):
         self.state.refresh()
-        for player in self.players:
-            player.refresh()
+        smp = random.sample(self.walkable, len(self.players))
+
+        for i in range(len(smp)):
+            self.players[i].refresh()
+            # self.players[i].pos = smp[i]
+
 
     # 打印游戏结果
 
@@ -151,30 +148,37 @@ class Game:
             self.display = Display()
             self.display.initialize(state)
         self.notifyAgentHooks('init')
-        while(result == 0):
 
-            alivePlayers = state.alivePlayers()
-            for player in alivePlayers:
+        turn = 0
+        while(True):
 
-                if not player.alive:
-                    continue
+            players = None
+
+            if turn % 2 == 0 :
+                players = state.alivePacmans()
+            else :
+                players = state.aliveGhosts()
+            
+
+
+            for player in players:
                 action = player.getAction(state)
-
                 state.next(player, action)
-                if(player.pos[0] < 0 and player.pos[1] < 0):
-                    print(player.isPacman, player.pos, action)
-                    import sys
-                    sys.exit()
                 result = state.whoWins()
                 if result != 0:
                     break
+
+            if result != 0:
                 self.notifyAgentHooks('observationFunction')
-            if self.params['numTraining'] < rnd:
-                self.display.update(state, rnd)
+                break
+            if turn % 2 == 1:
+                self.notifyAgentHooks('observationFunction')  
+                if self.params['numTraining'] < rnd:
+                    self.display.update(state, rnd)
 
-            self.notifyAgentHooks('observationFunction')
             eps += 1
-
+            turn += 1
+        self.notifyAgentHooks('observationFunction')
         self.notifyAgentHooks('final')
         R = max(rnd, 100)
         self.rate = 1 - (state.food.count() /

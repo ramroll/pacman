@@ -123,12 +123,6 @@ class Layout:
         for y in range(self.height):
             for x in range(self.width):
                 layoutChar = layoutText[maxY - y][x]
-                # if layoutChar == ' ':
-                #     rnd = random.random()
-                #     if rnd < 0.90:
-                #         layoutChar = '2'
-                #     else:
-                #         layoutChar = '3'
                 if str(layoutChar) == '4':
                     if str(pacmanCount) in pacmanFeast:
                         if pacmanFeast[str(pacmanCount)] == True:

@@ -63,10 +63,8 @@ def desc(p0, p1) :
   v = 0
   if dist < 2 :
     v = 1
-  elif dist < 4 :
+  else :
     v = 2
-  else:
-    v = 3
 
 
   vx, vy = (p1[0] - p0[0] , p1[1] - p0[1])
@@ -100,6 +98,7 @@ class FastDQNAgent:
     self.avgr = 0.0
     self.exps = deque()
     self.wonr = 0.0
+    self.maxR = -1000
     # self.player_hash = {}
     self.load()
   
@@ -175,6 +174,7 @@ class FastDQNAgent:
           fringe.append((nbr_x, nbr_y, dist+1))
 
     h_list = [0,0,0,0]
+    ghosts.reverse()
     for ghost in ghosts:
       gx,gy,dist = ghost
       if (gx,gy) == pos:
@@ -226,7 +226,7 @@ class FastDQNAgent:
         for nbr_x, nbr_y in nbrs:
 
           for (gx, gy) in gset:
-            if util.manhattanDistance((gx, gy), pos) < dist + 1 : 
+            if util.manhattanDistance((gx, gy), pos) < 2 : 
               continue
           if (nbr_x, nbr_y) in gset:
             continue
@@ -252,7 +252,7 @@ class FastDQNAgent:
   def hash_state(self, state, pos, action, s) :
 
     
-    # h_walls = util.wall_desc(pos, state.layout.walls)
+    h_walls = util.wall_desc(pos, state.layout.walls)
     aliveGhosts = state.aliveGhosts()
 
     h_food = self.food_desc(pos, state.layout.walls, state.food, aliveGhosts)
@@ -260,9 +260,10 @@ class FastDQNAgent:
 
 
     closestCapsule = None
-    if len(state.capsules) :
-      closestCapsule = min(state.capsules, key = lambda c : util.manhattanDistance(c, pos))
-
+    h_capsule = 0
+    # if len(state.capsules) :
+    #   closestCapsule = min(state.capsules, key = lambda c : util.manhattanDistance(c, pos))
+    #   h_capsule = desc(pos, closestCapsule)
     h_action = 0
     if action == 'North':
       h_action = 1
@@ -274,7 +275,8 @@ class FastDQNAgent:
       h_action = 4
     
     h_super = 1 if s > 0 else 0
-    return h_ghosts * 1e9 + h_food * 1e3 + h_super * 1e1 + h_action
+
+    return str(h_walls * 1e14 + h_ghosts * 1e9 + h_food * 1e5 + h_capsule * 1e2 + h_super * 1e1 + h_action)
 
 
   def getQValue(self, state, pos, action, superVal) :
@@ -309,20 +311,7 @@ class FastDQNAgent:
       action = Actions.vectorToDirection((newPos[0] - pos[0], newPos[1] - pos[1])) 
 
       curQValue = self.getQValue(state, pos, action, superVal)
-      # print('\n-------')
-      # print(state)
-      # print('->', action)
-      # print(newState)
-
       nextQValue = (1-self.alpha) * curQValue + self.alpha * (reward + self.params['discount'] * self.computeValueFromQValues(newState, newPos, superVal) )
-      # print('lscore=%2d,nscore=%2d,reward=%2d,curQ=%.2f, nxtQ=%.2f' % 
-      #     (state.pacmanScore, newState.pacmanScore,newState.pacmanScore - state.pacmanScore, curQValue, nextQValue))
-      # print(action, curQValue, nextQValue, newState.pacmanScore - state.pacmanScore)
-      # if reward > 0 and nextQValue < curQValue :
-      #   print(self.params['discount'])
-      #   print('lscore=%2d,nscore=%2d,reward=%2d,curQ=%.2f, nxtQ=%.2f' % 
-      #     (state.pacmanScore, newState.pacmanScore,newState.pacmanScore - state.pacmanScore, curQValue, nextQValue))
-      #   raise 'hhh'
       self.QValues[self.hash_state(state, pos, action,superVal)] = nextQValue
       # self.state_hash[state.hash(action)] = 1
       self.eps = max(self.params['eps_final'], 1.00 - float(self.cnt) / float(self.params['eps_step']))
@@ -343,6 +332,7 @@ class FastDQNAgent:
 
       self.current_score = newState.pacmanScore
       reward = self.current_score - self.last_score
+      # print(reward)
       self.last_score = self.current_score
       self.last_reward = reward
       self.ep_rew += self.last_reward
@@ -356,7 +346,7 @@ class FastDQNAgent:
         self.train()
 
 
-      self.won = newState.pacmanScore > newState.ghostScore
+    self.won = newState.pacmanScore > newState.ghostScore
     self.last_state = newState.copy()
     self.last_pos = pos
     self.frame += 1
@@ -370,8 +360,6 @@ class FastDQNAgent:
 
   def final(self, state) :
 
-    if self.params['num_training'] == 0:
-      return
     self.cnt += 1
     # Print stats
     # log_file = open('./logs/'+str(self.general_record_time)+'-l-'+str(self.params['width'])+'-m-'+str(
@@ -381,16 +369,18 @@ class FastDQNAgent:
     # log_file.write("| Q: %10f | won: %r \n" %
     #                 ((max(self.Q_global, default=float('nan')), self.won)))
     self.avgr = self.ep_rew * 0.01 + self.avgr * 0.99
-    self.wonr = (0.001 if self.won else 0) + self.wonr * 0.999
-    
+    self.wonr = (0.01 if self.won else 0) + self.wonr * 0.99
+    self.maxR = max(self.ep_rew, self.maxR)
     if self.cnt % 40 == 0 :
-      sys.stdout.write("# %4d | steps: %5d | hsize: %4d | avgr: %6.2f | wonr : %6.2f | r : %4d | e: %10f | won: %s\n" %
-                        (self.numeps, self.local_cnt, len(self.QValues), self.avgr, self.wonr, self.ep_rew,  self.eps, self.won))
+      sys.stdout.write("# %4d | hsize: %4d | avgr: %6.2f | wonr : %6.2f | r : %4d | mr : %4d | e: %3.2f | won: %s\n" %
+                        (self.numeps, len(self.QValues), self.avgr, self.wonr, self.ep_rew, self.maxR,  self.eps, self.won))
 
       # print(' %4d %4d' % (len(self.QValues), len(self.state_hash)))
       sys.stdout.flush()
+    if self.params['num_training'] == 0:
+      return
 
-    if self.cnt > 0 and  self.cnt % 500 == 0:  
+    if self.cnt > 0 and  self.cnt % 1000 == 0:  
       print('save')
       self.save()
   
@@ -419,7 +409,7 @@ class FastDQNAgent:
           self.eps = .5
           self.cnt = obj['cnt'] 
           self.numeps = 0
-          print(self.QValues)
+          # print(self.QValues)
       except :
         return
         

@@ -89,6 +89,7 @@ class AstarGhost(GhostAgent) :
         nearestPacman = None
         nearestPath = None
         minPath = 1e10 
+
         for pacman in pacmans : 
             path = astar(self.player.pos, pacman.pos, state.layout.walls, state.layout.width, state.layout.height)
             if minPath > len(path) :
