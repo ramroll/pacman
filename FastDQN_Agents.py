@@ -419,7 +419,7 @@ class FastDQNAgent:
           self.eps = .5
           self.cnt = obj['cnt'] 
           self.numeps = 0
-          print('loaded')
+          print(self.QValues)
       except :
         return
         
