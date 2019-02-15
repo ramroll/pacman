@@ -22,14 +22,17 @@ class Game:
 
     def nextRound(self, layout):
         newState = State(layout)
-
+        self.state.layout = layout
+        self.state.food = layout.food.copy()
+        self.state.capsules = layout.capsules.copy()
         ghost_pos = []
         ghosts = []
-        players = [p for p in self.players if not p.isPacman]
-        for isPacman, pos, super in layout.agentPositions:
+        players = [p for p in self.players if p.isPacman]
+        for isPacman, pos, name, super in layout.agentPositions:
             if not isPacman:
-                players.append(Player(False, (int(pos[0]), int(pos[1])), 0, 0))
-        
+                players.append(
+                    Player(False, (int(pos[0]), int(pos[1])), name, super))
+
         self.players = players
         self.state.players = players
 
@@ -56,16 +59,14 @@ class Game:
             'num_training': self.params['numTraining'],
             'layout': self.params['layout']
         }
-
-        i = 0
-        for isPacman, pos, super in self.state.layout.agentPositions:
-            player = Player(isPacman, (int(pos[0]), int(pos[1])), i, super)
-            print('2222')
-            i += 1
-            player.setAgent(
-                self.pacmanType if isPacman else self.ghostType, self.state, agentParams)
-            players.append(player)
-        print('createplayers end...')
+        agentPositions = self.state.layout.agentPositions
+        if len(agentPositions) > 0:
+            for isPacman, pos, name, super in agentPositions:
+                player = Player(
+                    isPacman, (int(pos[0]), int(pos[1])), name, super)
+                player.setAgent(
+                    self.pacmanType if isPacman else self.ghostType, self.state, agentParams)
+                players.append(player)
         return players
 
     def initialize(self, layout):
@@ -115,15 +116,14 @@ class Game:
     # 提示下一步
 
     def hintNextMove(self):
-        print('hintNextMove...')
         state = self.state
         alivePlayers = state.alivePlayers()
         pacmanCount = 0
         direct = {
-            'North': 'UP',
-            'South': 'DOWN',
-            'East': 'RIGHT',
-            'West': 'LEFT',
+            'North': 'LEFT',
+            'South': 'RIGHT',
+            'East': 'UP',
+            'West': 'DOWN',
             'Stop': 'STOP'
         }
         dirs = dict()
@@ -134,7 +134,7 @@ class Game:
             if player.isPacman:
                 action = player.getAction(state)
                 state.next(player, action)
-                dirs[pacmanCount] = direct[action]
+                dirs[player.index] = direct[action]
                 pacmanCount += 1
         return {'dirs': dirs}
 
