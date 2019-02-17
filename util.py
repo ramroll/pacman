@@ -754,6 +754,8 @@ def astar(s, t, walls, width, height) :
                         if g_table[x,y] > g_table[fx, fy] + 1 :
                             parent[(x, y)] = (fx, fy) 
                             g_table[x, y] = g_table[fx, fy] + 1
+    if not close_table[t[0], t[1]]:
+        return []
     path = [t]
     m = t
     while m in parent.keys():
@@ -795,6 +797,7 @@ def closestNFood(pos, food, walls, n, ghosts):
     return nfoods
 
 def wall_desc(pos, walls):
+
     fringe = [(pos[0], pos[1], 0)]
     expanded = set()
     l_set = set()

@@ -63,14 +63,16 @@ def desc(p0, p1) :
   v = 0
   if dist < 2 :
     v = 1
-  else :
+  elif dist < 4 :
     v = 2
+  else:
+    v = 3
 
 
   vx, vy = (p1[0] - p0[0] , p1[1] - p0[1])
   d = (normalize(vx), normalize(vy))
 
-  return hash_d(d) * v
+  return hash_d(d) 
  
 class FastDQNAgent:
 
@@ -95,10 +97,11 @@ class FastDQNAgent:
     self.QValues = {}
     self.state_hash = {}
     
+    self.h_wall_counter = {}
+    self.h_food_counter = {}
     self.avgr = 0.0
     self.exps = deque()
     self.wonr = 0.0
-    self.maxR = -1000
     # self.player_hash = {}
     self.load()
   
@@ -127,6 +130,7 @@ class FastDQNAgent:
 
     for legalAction in legalActions:
       QValueTemp = self.getQValue(state, self.player.pos, legalAction, self.player.super)
+
       if QValueTemp > QValue:
         action = legalAction
         QValue = QValueTemp
@@ -136,13 +140,13 @@ class FastDQNAgent:
   def hash_dir(self, v) :
     x,y = v
     if x == 1 and y == 0 :
-      return 0
-    elif x == -1 and y == 0:
       return 1
-    elif x == 0 and y == 1:
+    elif x == -1 and y == 0:
       return 2
-    else:
+    elif x == 0 and y == 1:
       return 3
+    else:
+      return 4
 
   def ghost_desc(self, pos, walls, aliveGhosts):
     fringe = [(pos[0], pos[1], 0)]
@@ -176,6 +180,7 @@ class FastDQNAgent:
     h_list = [0,0,0,0]
     ghosts.reverse()
     for ghost in ghosts:
+      
       gx,gy,dist = ghost
       if (gx,gy) == pos:
         continue
@@ -201,7 +206,7 @@ class FastDQNAgent:
       
     
       
-  def food_desc(self,pos,walls,foods,ghosts) :
+  def food_desc(self,pos,walls,foods,ghosts,capsules) :
     fringe = [(pos[0], pos[1], 0)]
     expanded = set()
     parent = {}
@@ -216,7 +221,7 @@ class FastDQNAgent:
 
         expanded.add((pos_x, pos_y))
 
-        if foods[pos_x][pos_y] > 0 :
+        if foods[pos_x][pos_y] > 0 or (pos_x, pos_y) in capsules:
           food_pos = (pos_x, pos_y)
           m = dist
           break
@@ -242,10 +247,12 @@ class FastDQNAgent:
         path.append(p)
         p = parent[p]
       path.reverse()
+      
       x = path[0]
       v = (x[0] - pos[0], x[1] - pos[1])
+      # h = dist * 100 + self.hash_dir(v)
 
-      h = dist * 100 + self.hash_dir(v)
+      h = self.hash_dir(v)
       return h
     return 0
 
@@ -253,16 +260,21 @@ class FastDQNAgent:
 
     
     h_walls = util.wall_desc(pos, state.layout.walls)
+    self.h_wall_counter[h_walls] = 1
     aliveGhosts = state.aliveGhosts()
 
-    h_food = self.food_desc(pos, state.layout.walls, state.food, aliveGhosts)
+    # print(state.capsules)
+    # sys.exit()
+    h_food = self.food_desc(pos, state.layout.walls, state.food, aliveGhosts, state.capsules)
     h_ghosts = self.ghost_desc(pos, state.layout.walls, aliveGhosts)
+    self.h_food_counter[h_food] = 1
 
-
-    closestCapsule = None
-    h_capsule = 0
-    # if len(state.capsules) :
+    # closestCapsule = None
+    # h_capsule = 0
+    # capsules = [c for c in state.capsules if util.manhattanDistance(c, pos) <= 2]
+    # if len(capsules) :
     #   closestCapsule = min(state.capsules, key = lambda c : util.manhattanDistance(c, pos))
+    # if closestCapsule:
     #   h_capsule = desc(pos, closestCapsule)
     h_action = 0
     if action == 'North':
@@ -275,9 +287,16 @@ class FastDQNAgent:
       h_action = 4
     
     h_super = 1 if s > 0 else 0
+    # print(h_capsule)
+    # print(h_food * 1e3 + h_action)
+    return h_food * 1e3 + h_action
+    # h_all = h_walls * 1e12 + h_food * 1e3 + h_action
+    # print('h_all', h_all, self.QValues[h_all])
+    # return h_all
+    # return  h_walls * 1e12 + h_ghosts * 1e9 + h_food * 1e3 + h_super * 1e1 + h_action
 
-    return str(h_walls * 1e14 + h_ghosts * 1e9 + h_food * 1e5 + h_capsule * 1e2 + h_super * 1e1 + h_action)
-
+  def refresh(self) :
+    self.cnt = 0
 
   def getQValue(self, state, pos, action, superVal) :
     # h = state.hash(action)
@@ -298,7 +317,7 @@ class FastDQNAgent:
 
 
     if self.params['num_training'] == 0:
-      return self.computeActionFromQValues(state) 
+      return self.computeActionFromQValues(state)
     if np.random.rand() > self.eps :
       action = self.computeActionFromQValues(state) 
     return action
@@ -311,9 +330,12 @@ class FastDQNAgent:
       action = Actions.vectorToDirection((newPos[0] - pos[0], newPos[1] - pos[1])) 
 
       curQValue = self.getQValue(state, pos, action, superVal)
+
+
       nextQValue = (1-self.alpha) * curQValue + self.alpha * (reward + self.params['discount'] * self.computeValueFromQValues(newState, newPos, superVal) )
+
       self.QValues[self.hash_state(state, pos, action,superVal)] = nextQValue
-      # self.state_hash[state.hash(action)] = 1
+
       self.eps = max(self.params['eps_final'], 1.00 - float(self.cnt) / float(self.params['eps_step']))
         
     # sys.exit()
@@ -332,10 +354,10 @@ class FastDQNAgent:
 
       self.current_score = newState.pacmanScore
       reward = self.current_score - self.last_score
-      # print(reward)
       self.last_score = self.current_score
       self.last_reward = reward
       self.ep_rew += self.last_reward
+     
       self.exps.append((state.copy(), newState.copy(), self.last_pos, pos, reward, self.player.super))
       if len(self.exps) > 10000:
         self.exps.popleft()
@@ -346,7 +368,7 @@ class FastDQNAgent:
         self.train()
 
 
-    self.won = newState.pacmanScore > newState.ghostScore
+      self.won = newState.food.count() == 0
     self.last_state = newState.copy()
     self.last_pos = pos
     self.frame += 1
@@ -360,27 +382,21 @@ class FastDQNAgent:
 
   def final(self, state) :
 
-    self.cnt += 1
-    # Print stats
-    # log_file = open('./logs/'+str(self.general_record_time)+'-l-'+str(self.params['width'])+'-m-'+str(
-    #     self.params['height'])+'-x-'+str(self.params['num_training'])+'.log', 'a')
-    # log_file.write("# %4d | steps: %5d | steps_t: %5d | t: %4f | r: %12f | e: %10f " %
-    #                 (self.numeps, self.local_cnt, self.cnt, time.time()-self.s, self.ep_rew, self.params['eps']))
-    # log_file.write("| Q: %10f | won: %r \n" %
-    #                 ((max(self.Q_global, default=float('nan')), self.won)))
-    self.avgr = self.ep_rew * 0.01 + self.avgr * 0.99
-    self.wonr = (0.01 if self.won else 0) + self.wonr * 0.99
-    self.maxR = max(self.ep_rew, self.maxR)
-    if self.cnt % 40 == 0 :
-      sys.stdout.write("# %4d | hsize: %4d | avgr: %6.2f | wonr : %6.2f | r : %4d | mr : %4d | e: %3.2f | won: %s\n" %
-                        (self.numeps, len(self.QValues), self.avgr, self.wonr, self.ep_rew, self.maxR,  self.eps, self.won))
-
-      # print(' %4d %4d' % (len(self.QValues), len(self.state_hash)))
-      sys.stdout.flush()
     if self.params['num_training'] == 0:
       return
+    self.cnt += 1
 
-    if self.cnt > 0 and  self.cnt % 1000 == 0:  
+    self.avgr = self.ep_rew * 0.01 + self.avgr * 0.99
+
+    self.wonr = (0.001 if self.won else 0) + self.wonr * 0.999
+    
+    if self.cnt % 40 == 0 :
+      sys.stdout.write("# %4d | steps: %5d |hash=%3d,(w:%3d,f:%4d) | avgr: %6.2f | wonr : %6.2f | r : %4d | e: %.2f | won: %s\n" %
+                        (self.numeps, self.local_cnt, len(self.QValues), len(self.h_wall_counter), len(self.h_food_counter), self.avgr, self.wonr, self.ep_rew,  self.eps, self.won))
+
+      sys.stdout.flush()
+
+    if self.cnt > 0 and  self.cnt % 500 == 0:  
       print('save')
       self.save()
   
@@ -392,6 +408,7 @@ class FastDQNAgent:
           "qtable" : self.QValues,
           "eps" : self.eps,
           "cnt" : self.cnt,
+          "h_wall_counter" : self.h_wall_counter,
           'numeps' : self.numeps
         }))
 
@@ -406,10 +423,12 @@ class FastDQNAgent:
           obj = ast.literal_eval(s)
 
           self.QValues = obj['qtable']
-          self.eps = .5
-          self.cnt = obj['cnt'] 
+
+          self.cnt = 0
           self.numeps = 0
-          # print(self.QValues)
+          self.h_wall_counter = obj['h_wall_counter']
+         
+          print('loaded')
       except :
         return
         

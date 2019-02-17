@@ -4,6 +4,7 @@ from state import State
 import time
 import util
 import random
+from layout import Layout
 # from graphicsUtils import *
 
 
@@ -20,13 +21,8 @@ class Game:
         self.rate = 0
         # 平均比例
         self.avg_rate = 0
-
+        self.change = 0
         layout = params['layout']
-        self.walkable = []
-        for x in range(layout.width) :
-            for y in range(layout.height) :
-                if layout.walls[x][y] == 0:
-                    self.walkable.append((x, y))
 
     
     def nextRound(self, layout):
@@ -58,13 +54,14 @@ class Game:
             player.setAgent(
                 self.pacmanType if isPacman else self.ghostType, self.state, agentParams)
             players.append(player)
-        print('createplayers end...')
+        # print('createplayers end...')
         return players
 
     def initialize(self, layout):
         self.state = State(layout)
         self.layout = layout
         self.players = self.createPlayers()
+        # print('l....', len(self.players))
         self.state.setPlayers(self.players)
 
     # 游戏循环
@@ -78,13 +75,111 @@ class Game:
 
     # 每次回合刷新
 
-    def refresh(self):
-        self.state.refresh()
-        smp = random.sample(self.walkable, len(self.players))
+    def refresh(self, rnd):
+        # rnd = 1000
+        state = self.state
+        p_set = set()
+        RND_NUM = 2000
+        if rnd % RND_NUM == 0:
+            
 
-        for i in range(len(smp)):
-            self.players[i].refresh()
-            # self.players[i].pos = smp[i]
+            # 模拟旋转
+            # rotate = (random.random())
+            layoutText = state.layout.layoutText
+            
+            height = len(layoutText)
+            width = len(layoutText[0])
+            newLayout = []
+
+            # flip-x
+            if (rnd // RND_NUM) % 10 in [1,2,6,7]:
+                print('flip-x')
+                for i in range(height):
+                    row = ['' for x in range(width)]
+                    for j in range(width):
+                        # print(layoutText[i], j)
+                        row.append(layoutText[i][-1-j])
+                    newLayout.append(row)
+                newLayoutText = [''.join(p) for p in newLayout]
+            # flip-y
+            if (rnd // RND_NUM) % 10 in [3,4,8,9]:
+                print('flip-y')
+                for i in range(height):
+                    row = ['' for x in range(width)]
+                    for j in range(width):
+                        row.append(layoutText[-1-i][j])
+                    newLayout.append(row)
+                newLayoutText = [''.join(p) for p in newLayout]
+            # rotate
+            if (rnd // RND_NUM) % 10 in [5, 0]:    
+                print('rotate')
+                for i in range(width):
+                    row = ['' for x in range(height)]
+                    for j in range(height):
+                        row.append(layoutText[j][i])
+                    newLayout.append(row)
+                newLayoutText = [''.join(p) for p in newLayout]
+            
+            # 随机生成pacman和Ghost
+            # 豆子和空位置的比例
+            ratio = 0.2 + 0.8*random.random()
+
+            for i in range(len(newLayoutText)) :
+                for j in range(len(newLayoutText[i])):
+                    c = newLayoutText[i][j]
+                    r = random.random()
+                    if c == '.' or c == ' ' or c == 'o' or c == 'P' or c == 'G' :
+                        if r < ratio :
+                            newLayoutText[i] = newLayoutText[i][:j] + '.' + newLayoutText[i][j+1:]
+                        else:
+                            newLayoutText[i] = newLayoutText[i][:j] + ' ' + newLayoutText[i][j+1:]
+            
+            
+            posList = []
+            for i in range(len(newLayoutText)) :
+                for j in range(len(newLayoutText[i])):
+                    c = newLayoutText[i][j]
+                    if c != '%':
+                        posList.append((i, j))
+            
+            # print(len(posList), len(self.players))
+            capsuleNum = round( random.random() * 2)
+            smp = random.sample(posList, len(self.players) + capsuleNum)
+            agents = []
+            for i in range(len(smp)) :
+                y,x = smp[i]
+                c = ''
+                if i < len(self.players) :
+                    self.players[i].setInitialPos( (x, len(newLayoutText) - y - 1) )
+                    self.players[i].refresh()
+
+
+                    if 'refresh' in dir(self.players[i].agent):
+                        self.players[i].agent.refresh()
+                    c = 'P' if self.players[i].isPacman else 'G'
+                    # agents.append(self.players)
+                else :
+                    c = 'o'
+
+                newLayoutText[y] = newLayoutText[y][:x] + c + newLayoutText[y][x+1:]
+            newLayout = Layout(newLayoutText)
+            state.layout = newLayout
+            state.refresh()
+            print(state)
+            # self.initialize(Layout(newLayoutText))
+
+        else:
+            for player in self.players:
+                player.refresh()
+            state.refresh()
+
+           
+
+
+
+
+
+                        
 
 
     # 打印游戏结果
@@ -112,7 +207,7 @@ class Game:
     # 提示下一步
 
     def hintNextMove(self):
-        print('hintNextMove...')
+        # print('hintNextMove...')print
         state = self.state
         alivePlayers = state.alivePlayers()
         pacmanCount = 0
@@ -139,7 +234,7 @@ class Game:
     def round(self, rnd):
 
         result = 0
-        self.refresh()
+        self.refresh(rnd)
         state = self.state
         eps = 0
 
@@ -163,7 +258,9 @@ class Game:
 
             for player in players:
                 action = player.getAction(state)
+
                 state.next(player, action)
+
                 result = state.whoWins()
                 if result != 0:
                     break
@@ -178,7 +275,7 @@ class Game:
 
             eps += 1
             turn += 1
-        self.notifyAgentHooks('observationFunction')
+        # self.notifyAgentHooks('observationFunction')
         self.notifyAgentHooks('final')
         R = max(rnd, 100)
         self.rate = 1 - (state.food.count() /

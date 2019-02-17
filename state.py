@@ -15,12 +15,12 @@ class State:
         # For graphics
         self._foodEaten = None
         self._capsuleEaten = None
-
+        self.total_food = self.food.count()
     def refresh(self):
         self.food = self.layout.food.copy()
         self.pacmanScore = 0
         self.ghostScore = self.layout.food.count() * 10
-        self.total_food = self.food.count()
+
 
         self.capsules = self.layout.capsules.copy()
 
@@ -41,11 +41,11 @@ class State:
 
     def whoWins(self):
         p = len(self.alivePacmans())
-        g = len(self.aliveGhosts())
+        # g = len(self.aliveGhosts())
         if p == 0:
             return 1
-        elif g == 0:
-            return 2
+        # elif g == 0:
+        #     return 2
         return 0
 
     def alivePlayers(self):
@@ -75,11 +75,12 @@ class State:
             # elif player.moves > 100 :
             #   time_p = 3
 
-            if player.moves > 200:
+            if player.moves > 50:
                 player.alive = False
                 return
 
-            # self.pacmanScore += TIME_PENALTY
+            self.pacmanScore += TIME_PENALTY
+
             g = self.aliveGhosts()
             collision = [x for x in g if x.pos == player.pos]
             if len(collision) > 0:
@@ -106,11 +107,10 @@ class State:
                 self.food[x][y] = False
                 self._foodEaten = (x, y)
                 numFood -= 1
-                if(numFood == 0):
-                    # self.pacmanScore += 50
-                    # self.ghostScore -= 500
-                    for ghost in self.aliveGhosts():
-                        ghost.alive = False
+            if(numFood == 0):
+                player.alive = False
+                for ghost in self.aliveGhosts():
+                    ghost.alive = False
         else:
             g = self.alivePacmans()
             # self.ghostScore += TIME_PENALTY

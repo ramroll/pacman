@@ -137,20 +137,20 @@ class Layout:
     def processLayoutChar(self, x, y, layoutChar, super=0):
         layoutChar = str(layoutChar)
         # wall
-        if layoutChar == '1':
+        if layoutChar == '%':
             self.walls[x][y] = True
         # bean
-        elif layoutChar == '2':
+        elif layoutChar == '.':
             self.food[x][y] = True
         # capsules
-        elif layoutChar == '3':
+        elif layoutChar == 'o':
             self.capsules.append((x, y))
         # pacman
-        elif layoutChar == '4':
+        elif layoutChar == 'P':
             self.agentPositions.append((0, (x, y), super))
             self.numPacman += 1
         # ghost
-        elif layoutChar in ['5']:
+        elif layoutChar in ['G']:
             self.agentPositions.append((1, (x, y), super))
             self.numGhosts += 1
         elif layoutChar in ['1', '2', '3', '4']:
